@@ -1,4 +1,7 @@
 {
   "application.experimental.rendererProfiling": true,
-  "editor.tabSize": 2
+  "editor.tabSize": 2,
+  "editor.wordWrap": "off",
+  "prettier.bracketSameLine": true,
+  "prettier.proseWrap": "preserve",
 }
