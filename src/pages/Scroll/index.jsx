@@ -8,56 +8,56 @@ import "./index.css";
 const { TextArea } = Input;
 const { Content } = Layout;
 const Scroll = () => {
-  const [isBatchModalVisible, setIsBatchModalVisible] = useState(false);
-  const [batchLoading, setBatchLoading] = useState(false);
-  const [data, setData] = useState([]);
-  const [batchForm] = Form.useForm();
-  const [isLoading, setIsLoading] = useState(false);
-  const [selectedKeys, setSelectedKeys] = useState([]);
-  const [tableLoading, setTableLoading] = useState(false);
+  const [ isBatchModalVisible, setIsBatchModalVisible ] = useState( false );
+  const [ batchLoading, setBatchLoading ] = useState( false );
+  const [ data, setData ] = useState( [] );
+  const [ batchForm ] = Form.useForm();
+  const [ isLoading, setIsLoading ] = useState( false );
+  const [ selectedKeys, setSelectedKeys ] = useState( [] );
+  const [ tableLoading, setTableLoading ] = useState( false );
   let idCounter = data.length + 1;
-  const [initialized, setInitialized] = useState(false);
-  const [hideColumn, setHideColumn] = useState(true);
+  const [ initialized, setInitialized ] = useState( false );
+  const [ hideColumn, setHideColumn ] = useState( true );
 
   const toggleHideColumn = () => {
-    setHideColumn(!hideColumn);
+    setHideColumn( !hideColumn );
   };
   // table body 高度
 
   //脱敏
   const getEyeIcon = () => {
-    if (hideColumn) {
+    if ( hideColumn ) {
       return <EyeInvisibleOutlined />;
     }
     return <EyeOutlined />;
   };
-  useEffect(() => {
-    setTableLoading(true);
+  useEffect( () => {
+    setTableLoading( true );
 
-    const storedAddresses = localStorage.getItem("Scroll_addresses");
-    setTimeout(() => {
-      setTableLoading(false);
-    }, 500);
+    const storedAddresses = localStorage.getItem( "Scroll_addresses" );
+    setTimeout( () => {
+      setTableLoading( false );
+    }, 500 );
 
-    if (storedAddresses) {
-      setData(JSON.parse(storedAddresses));
+    if ( storedAddresses ) {
+      setData( JSON.parse( storedAddresses ) );
     }
 
-    setInitialized(true);
-  }, []);
+    setInitialized( true );
+  }, [] );
 
-  useEffect(() => {
-    if (!initialized) return;
+  useEffect( () => {
+    if ( !initialized ) return;
 
-    localStorage.setItem("Scroll_addresses", JSON.stringify(data));
-  }, [data, initialized]);
+    localStorage.setItem( "Scroll_addresses", JSON.stringify( data ) );
+  }, [ data, initialized ] );
 
   const columns = [
     {
       title: "#",
       key: "index",
       align: "center",
-      render: (text, record, index) => index + 1,
+      render: ( text, record, index ) => index + 1,
     },
     {
       title: "备注",
@@ -65,7 +65,7 @@ const Scroll = () => {
       key: "name",
       align: "center",
       className: "name",
-      render: (text, record) => {
+      render: ( text, record ) => {
         const displayText = text || <EditOutlined />;
         return (
           <Popconfirm
@@ -74,7 +74,7 @@ const Scroll = () => {
                 <Input
                   placeholder={"请输入备注"}
                   defaultValue={text}
-                  onChange={(e) => {
+                  onChange={( e ) => {
                     record.name = e.target.value;
                   }}
                   allowClear
@@ -84,10 +84,10 @@ const Scroll = () => {
             }
             icon={<EditOutlined />}
             onConfirm={() => {
-              setData([...data]);
-              localStorage.setItem("Scroll_addresses", JSON.stringify(data));
+              setData( [ ...data ] );
+              localStorage.setItem( "Scroll_addresses", JSON.stringify( data ) );
             }}
-            onCancel={() => {}}
+            onCancel={() => { }}
             okText={"确定"}
             cancelText={"取消"}>
             <Tag color="blue" style={{ cursor: "pointer" }}>
@@ -112,9 +112,9 @@ const Scroll = () => {
       key: "address",
       align: "center",
       className: "address",
-      render: (text, record) => {
-        if (hideColumn) {
-          return text.slice(0, 4) + "***" + text.slice(-4);
+      render: ( text, record ) => {
+        if ( hideColumn ) {
+          return text.slice( 0, 4 ) + "***" + text.slice( -4 );
         }
         return text;
       },
@@ -127,31 +127,31 @@ const Scroll = () => {
           dataIndex: "balance",
           key: "Scroll_eth_balance",
           align: "center",
-          render: (text, record) => text,
+          render: ( text, record ) => text,
         },
         {
           title: "积分",
           dataIndex: "sessions",
           key: "Scroll_eth_sessions",
           align: "center",
-          render: (text, record) => text,
+          render: ( text, record ) => text,
         },
         {
           title: "Tx",
-          dataIndex: ["activity", "tx"],
+          dataIndex: [ "activity", "tx" ],
           key: "Scroll_tx_amount",
           align: "center",
-          render: (text, record) => text,
-          sorter: (a, b) => a.activity.tx - b.activity.tx,
+          render: ( text, record ) => text,
+          sorter: ( a, b ) => a.activity.tx - b.activity.tx,
         },
         {
           title: "最后交易",
-          dataIndex: ["activity", "lastTx"],
+          dataIndex: [ "activity", "lastTx" ],
           key: "Scroll_latest_tx",
           align: "center",
-          render: (text, record) => (
+          render: ( text, record ) => (
             <a
-              href={`https://scrollscan.com/address/${record.address}`}
+              href={`https://scrollscan.com/address/${ record.address }`}
               target="_blank">
               {text}
             </a>
@@ -162,15 +162,15 @@ const Scroll = () => {
           children: [
             {
               title: "L1->L2",
-              dataIndex: ["L1ToL2", "L1ToL2Tx"],
+              dataIndex: [ "L1ToL2", "L1ToL2Tx" ],
               align: "center",
-              render: (text, record) => text,
+              render: ( text, record ) => text,
             },
             {
               title: "L2->L1",
-              dataIndex: ["L2ToL1", "L2ToL1Tx"],
+              dataIndex: [ "L2ToL1", "L2ToL1Tx" ],
               align: "center",
-              render: (text, record) => text,
+              render: ( text, record ) => text,
             },
           ],
         },
@@ -179,15 +179,15 @@ const Scroll = () => {
           children: [
             {
               title: "L1->L2",
-              dataIndex: ["L1ToL2", "L1ToL2Amount"],
+              dataIndex: [ "L1ToL2", "L1ToL2Amount" ],
               align: "center",
-              render: (text, record) => text,
+              render: ( text, record ) => text,
             },
             {
               title: "L2->L1",
-              dataIndex: ["L2ToL1", "L2ToL1Amount"],
+              dataIndex: [ "L2ToL1", "L2ToL1Amount" ],
               align: "center",
-              render: (text, record) => text,
+              render: ( text, record ) => text,
             },
           ],
         },
@@ -196,34 +196,34 @@ const Scroll = () => {
           children: [
             {
               title: "天",
-              dataIndex: ["activity", "dayActivity"],
+              dataIndex: [ "activity", "dayActivity" ],
               align: "center",
-              render: (text, record) => text,
+              render: ( text, record ) => text,
             },
             {
               title: "周",
-              dataIndex: ["activity", "weekActivity"],
+              dataIndex: [ "activity", "weekActivity" ],
               align: "center",
-              render: (text, record) => text,
+              render: ( text, record ) => text,
             },
             {
               title: "月",
-              dataIndex: ["activity", "monthActivity"],
+              dataIndex: [ "activity", "monthActivity" ],
               align: "center",
-              render: (text, record) => text,
+              render: ( text, record ) => text,
             },
             {
               title: "合约",
-              dataIndex: ["activity", "contractActivity"],
+              dataIndex: [ "activity", "contractActivity" ],
               align: "center",
-              render: (text, record) => text,
+              render: ( text, record ) => text,
             },
             {
               title: "fee(E)",
-              dataIndex: ["activity", "fee"],
+              dataIndex: [ "activity", "fee" ],
               align: "center",
-              render: (text, record) => text,
-              sorter: (a, b) => a.activity.fee - b.activity.fee,
+              render: ( text, record ) => text,
+              sorter: ( a, b ) => a.activity.fee - b.activity.fee,
             },
           ],
         },
@@ -231,21 +231,21 @@ const Scroll = () => {
           title: "状态",
           key: "result",
           align: "center",
-          render: (text, record) => (
+          render: ( text, record ) => (
             <Space>
-              {record["result"] === "success" ? (
+              {record[ "result" ] === "success" ? (
                 <Tag icon={<CheckCircleOutlined />} color="success">
                   成功
                 </Tag>
               ) : null}
-              {record["result"] === "error" ? (
-                <Tooltip title={record["reason"]}>
+              {record[ "result" ] === "error" ? (
+                <Tooltip title={record[ "reason" ]}>
                   <Tag icon={<CloseCircleOutlined />} color="error">
                     失败{" "}
                   </Tag>
                 </Tooltip>
               ) : null}
-              {record["result"] === "pending" ? (
+              {record[ "result" ] === "pending" ? (
                 <Tag icon={<SyncOutlined spin />} color="processing">
                   获取中{" "}
                 </Tag>
@@ -257,19 +257,19 @@ const Scroll = () => {
           title: "操作",
           key: "action",
           align: "center",
-          render: (text, record) => (
+          render: ( text, record ) => (
             <Space>
               <Popconfirm
                 title={"确认删除？"}
                 onConfirm={async () => {
-                  await handleDelete(record.address);
+                  await handleDelete( record.address );
                 }}>
                 <Button icon={<DeleteOutlined />} />
               </Popconfirm>
               <Button
                 icon={<ReloadOutlined />}
                 onClick={() => {
-                  handleRefresh(record.key);
+                  handleRefresh( record.key );
                 }}
               />
             </Space>
@@ -278,224 +278,224 @@ const Scroll = () => {
       ],
     },
   ];
-  const handleDelete = async (address) => {
-    setData(data.filter((item) => item.address !== address));
+  const handleDelete = async ( address ) => {
+    setData( data.filter( ( item ) => item.address !== address ) );
     localStorage.setItem(
       "Scroll_addresses",
-      JSON.stringify(data.filter((item) => item.address !== address))
+      JSON.stringify( data.filter( ( item ) => item.address !== address ) )
     );
   };
   //批量添加地址
   const handleBatchOk = async () => {
     try {
-      setBatchLoading(true);
-      setIsBatchModalVisible(false);
+      setBatchLoading( true );
+      setIsBatchModalVisible( false );
       const values = await batchForm.validateFields();
-      const addresses = values.addresses.split("\n");
+      const addresses = values.addresses.split( "\n" );
 
       const limit = 2;
       let activePromises = 0;
       let promisesQueue = [];
 
       const processQueue = () => {
-        while (promisesQueue.length > 0 && activePromises < limit) {
+        while ( promisesQueue.length > 0 && activePromises < limit ) {
           const promise = promisesQueue.shift();
           activePromises += 1;
 
-          promise().finally(() => {
+          promise().finally( () => {
             activePromises -= 1;
             processQueue();
-          });
+          } );
         }
       };
 
-      for (let address of addresses) {
+      for ( let address of addresses ) {
         address = address.trim();
-        if (!address.startsWith("0x")) {
+        if ( !address.startsWith( "0x" ) ) {
           address = "0x" + address;
         }
 
         const promiseFunction = () =>
-          new Promise(async (resolve, reject) => {
+          new Promise( async ( resolve, reject ) => {
             try {
-              setData((prevData) => {
-                const updatedData = [...prevData];
+              setData( ( prevData ) => {
+                const updatedData = [ ...prevData ];
                 const index = updatedData.findIndex(
-                  (item) => item.address === address
+                  ( item ) => item.address === address
                 );
-                if (index === -1) {
+                if ( index === -1 ) {
                   const newEntry = {
                     key: idCounter.toString(),
                     address: address,
                     result: "pending",
                   };
                   idCounter++;
-                  updatedData.push(newEntry);
+                  updatedData.push( newEntry );
                 }
                 return updatedData;
-              });
-              const response = await getScrollData(address);
-              setData((prevData) => {
-                const updatedData = [...prevData];
+              } );
+              const response = await getScrollData( address );
+              setData( ( prevData ) => {
+                const updatedData = [ ...prevData ];
                 const index = updatedData.findIndex(
-                  (item) => item.address === address
+                  ( item ) => item.address === address
                 );
-                if (index !== -1) {
-                  updatedData[index] = {
-                    ...updatedData[index],
+                if ( index !== -1 ) {
+                  updatedData[ index ] = {
+                    ...updatedData[ index ],
                     ...response,
                   };
                 }
                 return updatedData;
-              });
+              } );
               resolve();
-            } catch (error) {
-              reject(error);
+            } catch ( error ) {
+              reject( error );
             }
-          });
-        promisesQueue.push(promiseFunction);
+          } );
+        promisesQueue.push( promiseFunction );
       }
       processQueue();
-      while (activePromises > 0 || promisesQueue.length > 0) {
-        await new Promise((resolve) => setTimeout(resolve, 100));
+      while ( activePromises > 0 || promisesQueue.length > 0 ) {
+        await new Promise( ( resolve ) => setTimeout( resolve, 100 ) );
       }
-      notification.success({
+      notification.success( {
         message: "成功",
         description: "批量添加完成",
         duration: 1,
-      });
-    } catch (error) {
-      notification.error({
+      } );
+    } catch ( error ) {
+      notification.error( {
         message: "错误",
         description: error.message,
         duration: 1,
-      });
+      } );
     } finally {
       batchForm.resetFields();
-      setSelectedKeys([]);
-      setBatchLoading(false);
+      setSelectedKeys( [] );
+      setBatchLoading( false );
     }
   };
   //刷新选中地址
-  const handleRefresh = async (singleKey) => {
-    const keys = singleKey ? [singleKey] : selectedKeys;
-    if (!keys.length) {
-      notification.error({
+  const handleRefresh = async ( singleKey ) => {
+    const keys = singleKey ? [ singleKey ] : selectedKeys;
+    if ( !keys.length ) {
+      notification.error( {
         message: "错误",
         description: "请先选择要刷新的地址",
         duration: 1,
-      });
+      } );
       return;
     }
-    setIsLoading(true);
+    setIsLoading( true );
     try {
       const limit = 2;
       let activePromises = 0;
       let promisesQueue = [];
       const processQueue = () => {
-        while (promisesQueue.length > 0 && activePromises < limit) {
+        while ( promisesQueue.length > 0 && activePromises < limit ) {
           const promise = promisesQueue.shift();
           activePromises += 1;
-          promise().finally(() => {
+          promise().finally( () => {
             activePromises -= 1;
             processQueue();
-          });
+          } );
         }
       };
-      for (let key of keys) {
-        const index = data.findIndex((item) => item.key === key);
-        if (index !== -1) {
+      for ( let key of keys ) {
+        const index = data.findIndex( ( item ) => item.key === key );
+        if ( index !== -1 ) {
           const promiseFunction = () =>
-            new Promise(async (resolve, reject) => {
+            new Promise( async ( resolve, reject ) => {
               try {
-                setData((prevData) => {
-                  const updatedData = [...prevData];
-                  for (let field in updatedData[index]) {
+                setData( ( prevData ) => {
+                  const updatedData = [ ...prevData ];
+                  for ( let field in updatedData[ index ] ) {
                     if (
                       field !== "address" &&
                       field !== "name" &&
                       field !== "key"
                     ) {
-                      if (field === "result") {
-                        updatedData[index][field] = "pending";
+                      if ( field === "result" ) {
+                        updatedData[ index ][ field ] = "pending";
                       } else {
-                        updatedData[index][field] = null;
+                        updatedData[ index ][ field ] = null;
                       }
                     }
                   }
                   return updatedData;
-                });
+                } );
 
-                const response = await getScrollData(data[index].address);
-                setData((prevData) => {
-                  const updatedData = [...prevData];
-                  updatedData[index] = {
-                    ...updatedData[index],
+                const response = await getScrollData( data[ index ].address );
+                setData( ( prevData ) => {
+                  const updatedData = [ ...prevData ];
+                  updatedData[ index ] = {
+                    ...updatedData[ index ],
                     ...response,
                   };
                   localStorage.setItem(
                     "Scroll_addresses",
-                    JSON.stringify(updatedData)
+                    JSON.stringify( updatedData )
                   );
                   return updatedData;
-                });
+                } );
                 resolve();
-              } catch (error) {
-                reject(error);
+              } catch ( error ) {
+                reject( error );
               }
-            });
-          promisesQueue.push(promiseFunction);
+            } );
+          promisesQueue.push( promiseFunction );
         }
       }
       processQueue();
-      while (activePromises > 0 || promisesQueue.length > 0) {
-        await new Promise((resolve) => setTimeout(resolve, 100));
+      while ( activePromises > 0 || promisesQueue.length > 0 ) {
+        await new Promise( ( resolve ) => setTimeout( resolve, 100 ) );
       }
-      notification.success({
+      notification.success( {
         message: "完成",
         description: "刷新地址数据完成",
         duration: 1,
-      });
-    } catch (error) {
-      notification.error({
+      } );
+    } catch ( error ) {
+      notification.error( {
         message: "错误",
         description: error.message,
         duration: 1,
-      });
+      } );
     } finally {
-      setIsLoading(false);
-      if (!singleKey) {
-        setSelectedKeys([]);
+      setIsLoading( false );
+      if ( !singleKey ) {
+        setSelectedKeys( [] );
       }
     }
   };
   //确认删除
   const handleDeleteSelected = async () => {
-    if (!selectedKeys.length) {
-      notification.error({
+    if ( !selectedKeys.length ) {
+      notification.error( {
         message: "错误",
         description: "请先选择要删除的地址",
         duration: 1,
-      });
+      } );
       return;
     }
-    setData(data.filter((item) => !selectedKeys.includes(item.key)));
+    setData( data.filter( ( item ) => !selectedKeys.includes( item.key ) ) );
     localStorage.setItem(
       "Scroll_addresses",
-      JSON.stringify(data.filter((item) => !selectedKeys.includes(item.key)))
+      JSON.stringify( data.filter( ( item ) => !selectedKeys.includes( item.key ) ) )
     );
-    setSelectedKeys([]);
+    setSelectedKeys( [] );
   };
   // 导出excl
   const exportToExcelFile = () => {
-    exportToExcel(data, "lineaInfo");
+    exportToExcel( data, "lineaInfo" );
   };
-  const [editingKey, setEditingKey] = useState(null);
+  const [ editingKey, setEditingKey ] = useState( null );
   // 选种address
   const rowSelection = {
     selectedRowKeys: selectedKeys,
-    onChange: (selectedRowKeys) => {
-      setSelectedKeys(selectedRowKeys);
+    onChange: ( selectedRowKeys ) => {
+      setSelectedKeys( selectedRowKeys );
     },
   };
   return (
@@ -506,7 +506,7 @@ const Scroll = () => {
           open={isBatchModalVisible}
           onOk={handleBatchOk}
           onCancel={() => {
-            setIsBatchModalVisible(false);
+            setIsBatchModalVisible( false );
             batchForm.resetFields();
           }}
           okText={"添加地址"}
@@ -519,23 +519,23 @@ const Scroll = () => {
               rules={[
                 {
                   required: true,
-                  validator: (_, value) => {
-                    const addresses = value.split("\n");
+                  validator: ( _, value ) => {
+                    const addresses = value.split( "\n" );
                     let errorLines = [];
-                    for (let i = 0; i < addresses.length; i++) {
-                      let address = addresses[i].trim();
+                    for ( let i = 0; i < addresses.length; i++ ) {
+                      let address = addresses[ i ].trim();
                       if (
-                        !address.startsWith("0x") ||
-                        (address.length !== 66 && address.length !== 42)
+                        !address.startsWith( "0x" ) ||
+                        ( address.length !== 66 && address.length !== 42 )
                       ) {
-                        errorLines.push(i + 1);
+                        errorLines.push( i + 1 );
                       }
                     }
-                    if (errorLines.length) {
+                    if ( errorLines.length ) {
                       return Promise.reject(
-                        `行 ${errorLines.join(
+                        `行 ${ errorLines.join(
                           ", "
-                        )} 的地址格式错误，请输入正确的地址`
+                        ) } 的地址格式错误，请输入正确的地址`
                       );
                     }
                     return Promise.resolve();
@@ -574,7 +574,7 @@ const Scroll = () => {
               <Button
                 type="primary"
                 onClick={() => {
-                  setIsBatchModalVisible(true);
+                  setIsBatchModalVisible( true );
                 }}
                 size={"large"}
                 style={{ width: "25%" }}
