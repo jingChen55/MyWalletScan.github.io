@@ -4,6 +4,7 @@ import getScrollData from "@utils/getScroll/main.js";
 import { Button, Card, Form, Input, Layout, Modal, notification, Popconfirm, Space, Spin, Table, Tag, Tooltip, } from "antd";
 import { useEffect, useState } from "react";
 import "./index.css";
+
 const { TextArea } = Input;
 const { Content } = Layout;
 const Scroll = () => {
@@ -17,13 +18,12 @@ const Scroll = () => {
   let idCounter = data.length + 1;
   const [initialized, setInitialized] = useState(false);
   const [hideColumn, setHideColumn] = useState(true);
+
   const toggleHideColumn = () => {
     setHideColumn(!hideColumn);
   };
   // table body 高度
-  const tableBodyMea = ({ height }) => {
-    console.log("Element height:", height);
-  };
+
   //脱敏
   const getEyeIcon = () => {
     if (hideColumn) {
@@ -549,11 +549,7 @@ const Scroll = () => {
             </Form.Item>
           </Form>
         </Modal>
-
-        <div
-          style={{ marginBottom: "10px" }}
-          className="aaa"
-          onMeaseure={tableBodyMea}>
+        <div  onResize={tableBodyMea}>
           <Spin spinning={tableLoading} size={"small"}>
             <Table
               rowSelection={rowSelection}
