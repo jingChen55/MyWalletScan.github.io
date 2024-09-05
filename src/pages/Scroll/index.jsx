@@ -549,7 +549,7 @@ const Scroll = () => {
             </Form.Item>
           </Form>
         </Modal>
-        <div  onResize={tableBodyMea}>
+        <div  >
           <Spin spinning={tableLoading} size={"small"}>
             <Table
               rowSelection={rowSelection}
