@@ -1,8 +1,8 @@
-     {
-       "printWidth": 120,
-       "singleQuote": true,
-       "trailingComma": "all",
-       "endOfLine": "lf",
-       "semi": true,
-       "proseWrap": "preserve"
-     }
+{
+  "printWidth": 120,
+  "singleQuote": true,
+  "trailingComma": "all",
+  "endOfLine": "lf",
+  "semi": true,
+  "proseWrap": "preserve"
+}

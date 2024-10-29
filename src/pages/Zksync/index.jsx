@@ -27,7 +27,6 @@ import {
 } from "@ant-design/icons";
 import {EyeOutlined, EyeInvisibleOutlined} from "@ant-design/icons"
 import {getAllZksSyncData} from "@utils/getZksyncData/index.js";
-import EcosystemModal from "@components/EcosystemModal/index.jsx";
 import {useTranslation} from "react-i18next";
 import {dbConfig, get, initDB} from "@utils/indexedDB/main.js";
 import deleteData from "@utils/indexedDB/deleteData.js";
@@ -797,7 +796,6 @@ function Zksync() {
     return (
         <div>
             <Content>
-                <EcosystemModal open={ecosystemModalVisible} onCancel={() => setEcosystemModalVisible(false)}/>
                 <Modal
                     title={addressDetail && addressDetail.address + '  ' + t('address_detail')}
                     open={showAddressDetailModal !== null}

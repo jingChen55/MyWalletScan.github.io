@@ -1,4 +1,4 @@
-import MenuHeader from "@pages/MenuHeader/index.jsx";
+import MenuHeader from "@layout/MenuHeader";
 import { Layout } from "antd";
 import { Outlet } from "react-router-dom";
 

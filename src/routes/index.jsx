@@ -5,13 +5,11 @@ import Linea from "@pages/Linea/index.jsx";
 import Scroll from "@pages/Scroll/index.jsx";
 import { Navigate, useRoutes } from "react-router-dom";
 
-const Zksync = React.lazy(() => import("@pages/Zksync"));
-const MainPage = React.lazy(() => import("@pages/MainPage"));
-const Stark = React.lazy(() => import("@pages/Stark"));
-const Layer = React.lazy(() => import("@pages/Layer"));
-// const Coffee = React.lazy(() => import("@pages/Coffee"));
-const ZkInfo = React.lazy(() => import("@pages/ZkInfo"));
-const Setting = React.lazy(() => import("@pages/Setting"));
+const Zksync = React.lazy( () => import( "@pages/Zksync" ) );
+const MainPage = React.lazy( () => import( "@layout" ) );
+const Layer = React.lazy( () => import( "@pages/Layer" ) );
+const ZkInfo = React.lazy( () => import( "@pages/ZkInfo" ) );
+const Setting = React.lazy( () => import( "@pages/Setting" ) );
 const router = [
   {
     path: "/",
@@ -21,18 +19,10 @@ const router = [
         path: "/zksync",
         element: <Zksync />,
       },
-      //{
-      //    path: '/zk_info',
-      //    element: <ZkInfo/>
-      //},
-      // {
-      //     path: '/stark',
-      //     element: <Stark/>,
-      // },
-      // {
-      //     path: '/stark_info',
-      //     element: <StarkInfo/>
-      // },
+      {
+        path: '/zk_info',
+        element: <ZkInfo />
+      },
       {
         path: "/linea",
         element: <Linea />,
@@ -45,14 +35,11 @@ const router = [
         path: "/Base",
         element: <Base />,
       },
-      // {
-      //     path: '/Layer',
-      //     element: <Layer/>,
-      // },
-      // {
-      //     path: '/coffee',
-      //     element: <Coffee/>,
-      // },
+      {
+        path: '/Layer',
+        element: <Layer />,
+      },
+
       {
         path: "/setting",
         element: <Setting />,
@@ -63,7 +50,7 @@ const router = [
 ];
 
 const WrapperRouter = () => {
-  let result = useRoutes(router);
+  let result = useRoutes( router );
   return <Suspense>{result}</Suspense>;
 };
 

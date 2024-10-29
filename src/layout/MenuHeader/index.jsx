@@ -11,9 +11,9 @@ const { Option } = Select;
 function LanguageSwitcher() {
   const { i18n } = useTranslation();
 
-  const changeLanguage = (language) => {
-    i18n.changeLanguage(language);
-    localStorage.setItem("i18nextLng", language);
+  const changeLanguage = ( language ) => {
+    i18n.changeLanguage( language );
+    localStorage.setItem( "i18nextLng", language );
   };
 
   return (
@@ -42,10 +42,18 @@ const MenuHeader = () => {
       label: "Base",
       key: "Base",
     },
-    // {
-    //   label: "coffee",
-    //   key: "coffee",
-    // },
+    {
+      label: "Layer",
+      key: "Layer",
+    },
+    {
+      label: "zksync",
+      key: "zksync",
+    },
+    {
+      label: "zk_info",
+      key: "zk_info",
+    },
     {
       label: <SettingOutlined />,
       key: "setting",
@@ -53,41 +61,41 @@ const MenuHeader = () => {
   ];
   const navigate = useNavigate();
   const location = useLocation();
-  const [current, setCurrent] = useState(
-    location.pathname.replace("/", "") || "Linea"
+  const [ current, setCurrent ] = useState(
+    location.pathname.replace( "/", "" ) || "Linea"
   );
 
-  const onClick = (e) => {
-    if (e.key === "languageSwitch" || e.key === "ethPrice") {
+  const onClick = ( e ) => {
+    if ( e.key === "languageSwitch" || e.key === "ethPrice" ) {
       return;
     }
 
-    setCurrent(e.key);
+    setCurrent( e.key );
   };
-  useEffect(() => {
+  useEffect( () => {
     initPage();
-  }, []);
-  useEffect(() => {
+  }, [] );
+  useEffect( () => {
     if (
-      location.pathname.replace("/", "") === "twitter" ||
-      location.pathname.replace("/", "") === "github"
+      location.pathname.replace( "/", "" ) === "twitter" ||
+      location.pathname.replace( "/", "" ) === "github"
     ) {
       return;
     }
-    setCurrent(location.pathname.replace("/", "") || "Linea");
-  }, [location.pathname]);
+    setCurrent( location.pathname.replace( "/", "" ) || "Linea" );
+  }, [ location.pathname ] );
 
-  useEffect(() => {
-    if (current === "twitter" || current === "github") {
+  useEffect( () => {
+    if ( current === "twitter" || current === "github" ) {
       return;
     }
-    navigate(`/${current}`);
-  }, [current]);
+    navigate( `/${ current }` );
+  }, [ current ] );
 
   return (
     <Menu
       onClick={onClick}
-      selectedKeys={[current]}
+      selectedKeys={[ current ]}
       mode="horizontal"
       style={{
         display: "flex",

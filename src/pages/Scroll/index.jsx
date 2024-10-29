@@ -1,622 +1,351 @@
-import { CheckCircleOutlined, CloseCircleOutlined, DeleteOutlined, DownloadOutlined, EditOutlined, EyeInvisibleOutlined, EyeOutlined, ReloadOutlined, SyncOutlined, UploadOutlined, } from "@ant-design/icons";
-import { exportToExcel } from "@utils";
+import { createBaseColumns } from '@/columns/baseColumns';
+import WalletActions from '@/components/WalletActions';
+import WalletTable from '@/components/WalletTable';
 import getScrollData from "@utils/getScroll/main.js";
-import { Button, Card, Form, Input, Layout, Modal, notification, Popconfirm, Space, Spin, Table, Tag, Tooltip, } from "antd";
-import { useEffect, useState } from "react";
-import "./index.css";
+import { processQueue } from '@utils/queueProcessor';
+import { Form, Layout, notification, Spin, Tag } from 'antd';
+import { useEffect, useState } from 'react';
 
-const { TextArea } = Input;
 const { Content } = Layout;
+
 const Scroll = () => {
-  const [ isBatchModalVisible, setIsBatchModalVisible ] = useState( false );
-  const [ batchLoading, setBatchLoading ] = useState( false );
-  const [ data, setData ] = useState( [] );
-  const [ batchForm ] = Form.useForm();
-  const [ isLoading, setIsLoading ] = useState( false );
+  // 初始化数据
+  const [ data, setData ] = useState( () => {
+    const stored = localStorage.getItem( 'Scroll_addresses' );
+    return stored ? JSON.parse( stored ) : [];
+  } );
+
+  const [ loading, setLoading ] = useState( {
+    table: false,
+    batch: false,
+    refresh: false,
+  } );
   const [ selectedKeys, setSelectedKeys ] = useState( [] );
-  const [ tableLoading, setTableLoading ] = useState( false );
-  let idCounter = data.length + 1;
-  const [ initialized, setInitialized ] = useState( false );
+  const [ isBatchModalVisible, setIsBatchModalVisible ] = useState( false );
+  const [ batchForm ] = Form.useForm();
   const [ hideColumn, setHideColumn ] = useState( true );
 
-  const toggleHideColumn = () => {
-    setHideColumn( !hideColumn );
-  };
-  // table body 高度
-
-  //脱敏
-  const getEyeIcon = () => {
-    if ( hideColumn ) {
-      return <EyeInvisibleOutlined />;
-    }
-    return <EyeOutlined />;
-  };
+  // 保存数据到 localStorage
   useEffect( () => {
-    setTableLoading( true );
-
-    const storedAddresses = localStorage.getItem( "Scroll_addresses" );
-    setTimeout( () => {
-      setTableLoading( false );
-    }, 500 );
-
-    if ( storedAddresses ) {
-      setData( JSON.parse( storedAddresses ) );
+    if ( data ) {
+      localStorage.setItem( 'Scroll_addresses', JSON.stringify( data ) );
     }
+  }, [ data ] );
 
-    setInitialized( true );
-  }, [] );
-
-  useEffect( () => {
-    if ( !initialized ) return;
-
-    localStorage.setItem( "Scroll_addresses", JSON.stringify( data ) );
-  }, [ data, initialized ] );
-
-  const columns = [
-    {
-      title: "#",
-      key: "index",
-      align: "center",
-      render: ( text, record, index ) => index + 1,
-    },
-    {
-      title: "备注",
-      dataIndex: "name",
-      key: "name",
-      align: "center",
-      className: "name",
-      render: ( text, record ) => {
-        const displayText = text || <EditOutlined />;
-        return (
-          <Popconfirm
-            title={
-              <div>
-                <Input
-                  placeholder={"请输入备注"}
-                  defaultValue={text}
-                  onChange={( e ) => {
-                    record.name = e.target.value;
-                  }}
-                  allowClear
-                  bordered
-                />
-              </div>
-            }
-            icon={<EditOutlined />}
-            onConfirm={() => {
-              setData( [ ...data ] );
-              localStorage.setItem( "Scroll_addresses", JSON.stringify( data ) );
-            }}
-            onCancel={() => { }}
-            okText={"确定"}
-            cancelText={"取消"}>
-            <Tag color="blue" style={{ cursor: "pointer" }}>
-              {displayText}
-            </Tag>
-          </Popconfirm>
-        );
-      },
-    },
-    {
-      title: (
-        <span>
-          钱包地址
-          <span
-            onClick={toggleHideColumn}
-            style={{ marginLeft: 8, cursor: "pointer" }}>
-            {getEyeIcon()}
-          </span>
-        </span>
-      ),
-      dataIndex: "address",
-      key: "address",
-      align: "center",
-      className: "address",
-      render: ( text, record ) => {
-        if ( hideColumn ) {
-          return text.slice( 0, 4 ) + "***" + text.slice( -4 );
-        }
-        return text;
-      },
-    },
-    {
-      title: "Scroll",
-      children: [
-        {
-          title: "ETH",
-          dataIndex: "balance",
-          key: "Scroll_eth_balance",
-          align: "center",
-          render: ( text, record ) => text,
-        },
-        {
-          title: "积分",
-          dataIndex: "sessions",
-          key: "Scroll_eth_sessions",
-          align: "center",
-          render: ( text, record ) => text,
-        },
-        {
-          title: "Tx",
-          dataIndex: [ "activity", "tx" ],
-          key: "Scroll_tx_amount",
-          align: "center",
-          render: ( text, record ) => text,
-          sorter: ( a, b ) => a.activity.tx - b.activity.tx,
-        },
-        {
-          title: "最后交易",
-          dataIndex: [ "activity", "lastTx" ],
-          key: "Scroll_latest_tx",
-          align: "center",
-          render: ( text, record ) => (
-            <a
-              href={`https://scrollscan.com/address/${ record.address }`}
-              target="_blank">
-              {text}
-            </a>
-          ),
-        },
-        {
-          title: "官方桥Tx",
-          children: [
-            {
-              title: "L1->L2",
-              dataIndex: [ "L1ToL2", "L1ToL2Tx" ],
-              align: "center",
-              render: ( text, record ) => text,
-            },
-            {
-              title: "L2->L1",
-              dataIndex: [ "L2ToL1", "L2ToL1Tx" ],
-              align: "center",
-              render: ( text, record ) => text,
-            },
-          ],
-        },
-        {
-          title: "官方桥金额(ETH)",
-          children: [
-            {
-              title: "L1->L2",
-              dataIndex: [ "L1ToL2", "L1ToL2Amount" ],
-              align: "center",
-              render: ( text, record ) => text,
-            },
-            {
-              title: "L2->L1",
-              dataIndex: [ "L2ToL1", "L2ToL1Amount" ],
-              align: "center",
-              render: ( text, record ) => text,
-            },
-          ],
-        },
-        {
-          title: "活跃统计",
-          children: [
-            {
-              title: "天",
-              dataIndex: [ "activity", "dayActivity" ],
-              align: "center",
-              render: ( text, record ) => text,
-            },
-            {
-              title: "周",
-              dataIndex: [ "activity", "weekActivity" ],
-              align: "center",
-              render: ( text, record ) => text,
-            },
-            {
-              title: "月",
-              dataIndex: [ "activity", "monthActivity" ],
-              align: "center",
-              render: ( text, record ) => text,
-            },
-            {
-              title: "合约",
-              dataIndex: [ "activity", "contractActivity" ],
-              align: "center",
-              render: ( text, record ) => text,
-            },
-            {
-              title: "fee(E)",
-              dataIndex: [ "activity", "fee" ],
-              align: "center",
-              render: ( text, record ) => text,
-              sorter: ( a, b ) => a.activity.fee - b.activity.fee,
-            },
-          ],
-        },
-        {
-          title: "状态",
-          key: "result",
-          align: "center",
-          render: ( text, record ) => (
-            <Space>
-              {record[ "result" ] === "success" ? (
-                <Tag icon={<CheckCircleOutlined />} color="success">
-                  成功
-                </Tag>
-              ) : null}
-              {record[ "result" ] === "error" ? (
-                <Tooltip title={record[ "reason" ]}>
-                  <Tag icon={<CloseCircleOutlined />} color="error">
-                    失败{" "}
-                  </Tag>
-                </Tooltip>
-              ) : null}
-              {record[ "result" ] === "pending" ? (
-                <Tag icon={<SyncOutlined spin />} color="processing">
-                  获取中{" "}
-                </Tag>
-              ) : null}
-            </Space>
-          ),
-        },
-        {
-          title: "操作",
-          key: "action",
-          align: "center",
-          render: ( text, record ) => (
-            <Space>
-              <Popconfirm
-                title={"确认删除？"}
-                onConfirm={async () => {
-                  await handleDelete( record.address );
-                }}>
-                <Button icon={<DeleteOutlined />} />
-              </Popconfirm>
-              <Button
-                icon={<ReloadOutlined />}
-                onClick={() => {
-                  handleRefresh( record.key );
-                }}
-              />
-            </Space>
-          ),
-        },
-      ],
-    },
-  ];
-  const handleDelete = async ( address ) => {
-    setData( data.filter( ( item ) => item.address !== address ) );
-    localStorage.setItem(
-      "Scroll_addresses",
-      JSON.stringify( data.filter( ( item ) => item.address !== address ) )
-    );
+  const showSuccess = ( message ) => {
+    notification.success( {
+      message: "成功",
+      description: message,
+      duration: 1,
+    } );
   };
-  //批量添加地址
-  const handleBatchOk = async () => {
+
+  const showError = ( message ) => {
+    notification.error( {
+      message: "错误",
+      description: message,
+      duration: 1,
+    } );
+  };
+
+  const handleBatchAdd = async ( processedAddresses ) => {
     try {
-      setBatchLoading( true );
-      setIsBatchModalVisible( false );
-      const values = await batchForm.validateFields();
-      const addresses = values.addresses.split( "\n" );
+      setLoading( prev => ( { ...prev, batch: true } ) );
+      let currentData = [ ...( data || [] ) ]; // 确保 data 不为 undefined
 
-      const limit = 2;
-      let activePromises = 0;
-      let promisesQueue = [];
-
-      const processQueue = () => {
-        while ( promisesQueue.length > 0 && activePromises < limit ) {
-          const promise = promisesQueue.shift();
-          activePromises += 1;
-
-          promise().finally( () => {
-            activePromises -= 1;
-            processQueue();
+      // 先添加所有地址
+      for ( const { address, name } of processedAddresses ) {
+        const existingIndex = currentData.findIndex( item => item?.address === address );
+        if ( existingIndex === -1 ) {
+          currentData.push( {
+            key: address,
+            address: address,
+            name: name,
+            result: "pending",
+            loading: true
           } );
         }
-      };
+      }
 
-      for ( let address of addresses ) {
-        address = address.trim();
-        if ( !address.startsWith( "0x" ) ) {
-          address = "0x" + address;
-        }
+      // 更新状态和本地存储
+      setData( currentData );
+      localStorage.setItem( 'Scroll_addresses', JSON.stringify( currentData ) );
 
-        const promiseFunction = () =>
-          new Promise( async ( resolve, reject ) => {
-            try {
-              setData( ( prevData ) => {
-                const updatedData = [ ...prevData ];
-                const index = updatedData.findIndex(
-                  ( item ) => item.address === address
-                );
-                if ( index === -1 ) {
-                  const newEntry = {
-                    key: idCounter.toString(),
-                    address: address,
-                    result: "pending",
-                  };
-                  idCounter++;
-                  updatedData.push( newEntry );
-                }
-                return updatedData;
-              } );
-              const response = await getScrollData( address );
-              setData( ( prevData ) => {
-                const updatedData = [ ...prevData ];
-                const index = updatedData.findIndex(
-                  ( item ) => item.address === address
-                );
-                if ( index !== -1 ) {
-                  updatedData[ index ] = {
-                    ...updatedData[ index ],
-                    ...response,
-                  };
-                }
-                return updatedData;
-              } );
-              resolve();
-            } catch ( error ) {
-              reject( error );
+      // 逐个获取数据
+      for ( const { address, name } of processedAddresses ) {
+        try {
+          const response = await getScrollData( address );
+
+          setData( prevData => {
+            const newData = [ ...( prevData || [] ) ];
+            const index = newData.findIndex( item => item?.address === address );
+            if ( index !== -1 ) {
+              newData[ index ] = {
+                ...newData[ index ],
+                ...response,
+                name: name,
+                result: "success",
+                loading: false
+              };
             }
+            localStorage.setItem( 'Scroll_addresses', JSON.stringify( newData ) );
+            return newData;
           } );
-        promisesQueue.push( promiseFunction );
+        } catch ( error ) {
+          console.error( `Error fetching data for address ${ address }:`, error );
+
+          setData( prevData => {
+            const newData = [ ...( prevData || [] ) ];
+            const index = newData.findIndex( item => item?.address === address );
+            if ( index !== -1 ) {
+              newData[ index ] = {
+                ...newData[ index ],
+                result: "error",
+                reason: error.message,
+                loading: false
+              };
+            }
+            localStorage.setItem( 'Scroll_addresses', JSON.stringify( newData ) );
+            return newData;
+          } );
+        }
       }
-      processQueue();
-      while ( activePromises > 0 || promisesQueue.length > 0 ) {
-        await new Promise( ( resolve ) => setTimeout( resolve, 100 ) );
-      }
-      notification.success( {
-        message: "成功",
-        description: "批量添加完成",
-        duration: 1,
-      } );
+
+      showSuccess( '批量添加完成' );
     } catch ( error ) {
-      notification.error( {
-        message: "错误",
-        description: error.message,
-        duration: 1,
-      } );
+      showError( error.message );
     } finally {
-      batchForm.resetFields();
+      setLoading( prev => ( { ...prev, batch: false } ) );
       setSelectedKeys( [] );
-      setBatchLoading( false );
     }
   };
-  //刷新选中地址
-  const handleRefresh = async ( singleKey ) => {
-    const keys = singleKey ? [ singleKey ] : selectedKeys;
-    if ( !keys.length ) {
-      notification.error( {
-        message: "错误",
-        description: "请先选择要刷新的地址",
-        duration: 1,
-      } );
-      return;
-    }
-    setIsLoading( true );
-    try {
-      const limit = 2;
-      let activePromises = 0;
-      let promisesQueue = [];
-      const processQueue = () => {
-        while ( promisesQueue.length > 0 && activePromises < limit ) {
-          const promise = promisesQueue.shift();
-          activePromises += 1;
-          promise().finally( () => {
-            activePromises -= 1;
-            processQueue();
-          } );
-        }
-      };
-      for ( let key of keys ) {
-        const index = data.findIndex( ( item ) => item.key === key );
-        if ( index !== -1 ) {
-          const promiseFunction = () =>
-            new Promise( async ( resolve, reject ) => {
-              try {
-                setData( ( prevData ) => {
-                  const updatedData = [ ...prevData ];
-                  for ( let field in updatedData[ index ] ) {
-                    if (
-                      field !== "address" &&
-                      field !== "name" &&
-                      field !== "key"
-                    ) {
-                      if ( field === "result" ) {
-                        updatedData[ index ][ field ] = "pending";
-                      } else {
-                        updatedData[ index ][ field ] = null;
-                      }
-                    }
-                  }
-                  return updatedData;
-                } );
 
-                const response = await getScrollData( data[ index ].address );
-                setData( ( prevData ) => {
-                  const updatedData = [ ...prevData ];
-                  updatedData[ index ] = {
-                    ...updatedData[ index ],
-                    ...response,
-                  };
-                  localStorage.setItem(
-                    "Scroll_addresses",
-                    JSON.stringify( updatedData )
-                  );
-                  return updatedData;
-                } );
-                resolve();
-              } catch ( error ) {
-                reject( error );
-              }
-            } );
-          promisesQueue.push( promiseFunction );
+  const handleRefresh = async ( address ) => {
+    try {
+      setLoading( prev => ( {
+        ...prev,
+        refresh: true,
+        table: true
+      } ) );
+
+      // 单个地址刷新
+      if ( typeof address === 'string' ) {
+        setData( prev => {
+          const updatedData = [ ...prev ];
+          const index = updatedData.findIndex( item => item.address === address );
+          if ( index !== -1 ) {
+            updatedData[ index ] = {
+              ...updatedData[ index ],
+              loading: true,
+              result: "pending",
+              balance: null,
+              activity: null,
+              sessions: null,
+              fee: null,
+              lastTx: null,
+              contractActivity: null,
+            };
+          }
+          return updatedData;
+        } );
+
+        const response = await getScrollData( address );
+        setData( prev => {
+          const updatedData = [ ...prev ];
+          const index = updatedData.findIndex( item => item.address === address );
+          if ( index !== -1 ) {
+            updatedData[ index ] = {
+              ...updatedData[ index ],
+              ...response,
+              loading: false,
+              result: "success"
+            };
+          }
+          return updatedData;
+        } );
+        showSuccess( '刷新成功' );
+      }
+      // 批量刷新
+      else {
+        if ( !selectedKeys?.length ) {
+          showError( '请选择要刷新的地址' );
+          return;
         }
+
+        // 设置选中地址的加载状态
+        setData( prev => {
+          const updatedData = [ ...prev ];
+          selectedKeys.forEach( key => {
+            const index = updatedData.findIndex( item => item.key === key );
+            if ( index !== -1 ) {
+              updatedData[ index ] = {
+                ...updatedData[ index ],
+                loading: true,
+                result: "pending",
+                balance: null,
+                activity: null,
+                sessions: null,
+                fee: null,
+                lastTx: null,
+                contractActivity: null,
+              };
+            }
+          } );
+          return updatedData;
+        } );
+
+        const addressesToRefresh = data
+          .filter( item => selectedKeys.includes( item.key ) )
+          .map( item => item.address );
+
+        if ( !addressesToRefresh.length ) {
+          showError( '没有找到要刷新的地址' );
+          return;
+        }
+
+        const tasks = addressesToRefresh.map( addr => async () => {
+          try {
+            const response = await getScrollData( addr );
+            setData( prev => {
+              const updatedData = [ ...prev ];
+              const index = updatedData.findIndex( i => i.address === addr );
+              if ( index !== -1 ) {
+                updatedData[ index ] = {
+                  ...updatedData[ index ],
+                  ...response,
+                  loading: false,
+                  result: "success"
+                };
+              }
+              return updatedData;
+            } );
+            return { address: addr, success: true };
+          } catch ( error ) {
+            setData( prev => {
+              const updatedData = [ ...prev ];
+              const index = updatedData.findIndex( i => i.address === addr );
+              if ( index !== -1 ) {
+                updatedData[ index ] = {
+                  ...updatedData[ index ],
+                  loading: false,
+                  result: "error",
+                  reason: error.message
+                };
+              }
+              return updatedData;
+            } );
+            return { address: addr, success: false, error };
+          }
+        } );
+
+        const results = await processQueue( tasks, 2 );
+        const successCount = results.filter( r => r?.success ).length;
+        showSuccess( `批量刷新完成，成功：${ successCount }/${ results.length }` );
       }
-      processQueue();
-      while ( activePromises > 0 || promisesQueue.length > 0 ) {
-        await new Promise( ( resolve ) => setTimeout( resolve, 100 ) );
-      }
-      notification.success( {
-        message: "完成",
-        description: "刷新地址数据完成",
-        duration: 1,
-      } );
     } catch ( error ) {
-      notification.error( {
-        message: "错误",
-        description: error.message,
-        duration: 1,
-      } );
+      console.error( '刷新错误:', error );
+      showError( error.message );
     } finally {
-      setIsLoading( false );
-      if ( !singleKey ) {
-        setSelectedKeys( [] );
-      }
+      setLoading( prev => ( {
+        ...prev,
+        refresh: false,
+        table: false
+      } ) );
     }
   };
-  //确认删除
+
+  const handleDelete = async ( address ) => {
+    setData( prev => prev.filter( item => item.address !== address ) );
+  };
+
   const handleDeleteSelected = async () => {
     if ( !selectedKeys.length ) {
-      notification.error( {
-        message: "错误",
-        description: "请先选择要删除的地址",
-        duration: 1,
-      } );
+      showError( "请先选择要删除的地址" );
       return;
     }
-    setData( data.filter( ( item ) => !selectedKeys.includes( item.key ) ) );
-    localStorage.setItem(
-      "Scroll_addresses",
-      JSON.stringify( data.filter( ( item ) => !selectedKeys.includes( item.key ) ) )
-    );
+    setData( prev => prev.filter( item => !selectedKeys.includes( item.key ) ) );
     setSelectedKeys( [] );
+    showSuccess( "删除选中地址成功" );
   };
-  // 导出excl
-  const exportToExcelFile = () => {
-    exportToExcel( data, "lineaInfo" );
-  };
-  const [ editingKey, setEditingKey ] = useState( null );
-  // 选种address
-  const rowSelection = {
-    selectedRowKeys: selectedKeys,
-    onChange: ( selectedRowKeys ) => {
-      setSelectedKeys( selectedRowKeys );
+
+  const baseColumns = createBaseColumns( {
+    type: 'scroll',
+    hideColumn,
+    onRefresh: handleRefresh,
+    onDelete: handleDelete,
+    onNameChange: ( record ) => {
+      setData( [ ...data ] );
+      localStorage.setItem( 'Scroll_addresses', JSON.stringify( data ) );
+    }
+  } );
+
+  const scrollSpecificColumns = [
+    {
+      title: "积分",
+      dataIndex: "sessions",
+      key: "Scroll_eth_sessions",
+      align: "center",
+      width: 100,
+      render: ( text, record ) => (
+        <Spin spinning={record.loading || false} size="small">
+          {text > 200 ? <Tag color="success">{text}</Tag> : text || 0}
+        </Spin>
+      ),
+      sorter: {
+        compare: ( a, b ) => ( a.sessions || 0 ) - ( b.sessions || 0 ),
+        multiple: 1
+      },
+      filters: [
+        { text: '> 200', value: '200' },
+        { text: '> 100', value: '100' },
+        { text: '> 50', value: '50' },
+        { text: '> 20', value: '20' },
+      ],
+      onFilter: ( value, record ) => {
+        const sessions = record.sessions || 0;
+        return sessions > Number( value );
+      },
+      filterMultiple: true,
     },
-  };
+  ];
+
+  const allColumns = [
+    ...baseColumns.slice( 0, 3 ),
+    ...scrollSpecificColumns,
+    ...baseColumns.slice( 3 ),
+  ];
+
   return (
     <div>
       <Content>
-        <Modal
-          title="批量添加地址"
-          open={isBatchModalVisible}
-          onOk={handleBatchOk}
-          onCancel={() => {
-            setIsBatchModalVisible( false );
-            batchForm.resetFields();
-          }}
-          okText={"添加地址"}
-          cancelText={"取消"}
-          width={800}>
-          <Form form={batchForm} layout="vertical">
-            <Form.Item
-              label="地址"
-              name="addresses"
-              rules={[
-                {
-                  required: true,
-                  validator: ( _, value ) => {
-                    const addresses = value.split( "\n" );
-                    let errorLines = [];
-                    for ( let i = 0; i < addresses.length; i++ ) {
-                      let address = addresses[ i ].trim();
-                      if (
-                        !address.startsWith( "0x" ) ||
-                        ( address.length !== 66 && address.length !== 42 )
-                      ) {
-                        errorLines.push( i + 1 );
-                      }
-                    }
-                    if ( errorLines.length ) {
-                      return Promise.reject(
-                        `行 ${ errorLines.join(
-                          ", "
-                        ) } 的地址格式错误，请输入正确的地址`
-                      );
-                    }
-                    return Promise.resolve();
-                  },
-                },
-              ]}>
-              <TextArea
-                placeholder="请输入地址，每行一个"
-                style={{ width: "100%", height: "300px", resize: "none" }}
-              />
-            </Form.Item>
-          </Form>
-        </Modal>
-        <div  >
-          <Spin spinning={tableLoading} size={"small"}>
-            <Table
-              rowSelection={rowSelection}
-              dataSource={data}
-              pagination={false}
-              bordered={true}
-              style={{ marginBottom: "20px" }}
-              size={"small"}
-              columns={columns}
-              scroll={{ x: 1500, y: "80vh" }}
-            />
-          </Spin>
+        <div style={{ marginBottom: "50px" }}>
+          <WalletTable
+            data={data}
+            loading={loading.table}
+            selectedKeys={selectedKeys}
+            onRefresh={handleRefresh}
+            onDelete={handleDelete}
+            columns={allColumns}
+            scroll={{ x: 1500, y: '80vh' }}
+            onSelectChange={setSelectedKeys}
+          />
         </div>
-        <div className="linea_footer">
-          <Card size={"small"} style={{ width: "100%" }}>
-            <div
-              style={{
-                width: "100%",
-                display: "flex",
-                justifyContent: "space-between",
-              }}>
-              <Button
-                type="primary"
-                onClick={() => {
-                  setIsBatchModalVisible( true );
-                }}
-                size={"large"}
-                style={{ width: "25%" }}
-                icon={<UploadOutlined />}
-                loading={batchLoading}>
-                {batchLoading ? "添加中..." : "添加地址"}
-              </Button>
-              <Button
-                type="primary"
-                onClick={() => handleRefresh()}
-                loading={isLoading}
-                size={"large"}
-                style={{ width: "25%" }}
-                icon={<SyncOutlined />}>
-                刷新选中地址
-              </Button>
-              <Popconfirm
-                title={"确认删除" + selectedKeys.length + "个地址？"}
-                onConfirm={async () => {
-                  await handleDeleteSelected();
-                }}>
-                <Button
-                  type="primary"
-                  danger
-                  size={"large"}
-                  style={{ width: "25%" }}
-                  icon={<DeleteOutlined />}>
-                  删除选中地址
-                </Button>
-              </Popconfirm>
-              <Button
-                type="primary"
-                icon={<DownloadOutlined />}
-                size={"large"}
-                style={{ width: "8%" }}
-                onClick={exportToExcelFile}
-              />
-            </div>
-          </Card>
-        </div>
+
+        <WalletActions
+          type="scroll"
+          data={data}
+          loading={loading}
+          selectedKeys={selectedKeys}
+          isBatchModalVisible={isBatchModalVisible}
+          setIsBatchModalVisible={setIsBatchModalVisible}
+          onBatchAdd={handleBatchAdd}
+          onRefresh={handleRefresh}
+          onDelete={handleDeleteSelected}
+          form={batchForm}
+        />
       </Content>
     </div>
   );
 };
+
 export default Scroll;

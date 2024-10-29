@@ -26,10 +26,9 @@ const getWeekNumber = (date) => {
     const dayIndex = (date.getDay() + 6) % 7;
     const daysSinceFirstDay = Math.floor((date.getTime() - oneJan.getTime()) / 86400000);
     const weekIndex = Math.floor((daysSinceFirstDay + oneJan.getDay() - dayIndex) / 7);
-
     return `${year}-${weekIndex}`;
 };
-
+ 
 const getActivity = (address, transactions) => {
     let tx = 0, lastTx = null, fee = 0;
     const uniqueDays = new Set();

@@ -8,10 +8,10 @@ const KeyList = [
     "VYUV9Q164QC9K42KFNT1ER5WK7T8TSJBEP",
     "FPYTQ3PVMBVK764FRZD47QI47HAF4URJ6H"
 ]
-const getTransactions = async (address) => {
-    const key = KeyList[Math.floor(Math.random() * KeyList.length)]
-    const url = "https://api.scrollscan.com/api?module=account&action=txlist&sort=asc&address=" + address + "&startblock=0" + "&apikey=" + key
-    const response = await axios.get(url);
+const getTransactions = async ( address ) => {
+    const key = KeyList[ Math.floor( Math.random() * KeyList.length ) ]
+    const url = `https://api.scrollscan.com/api?module=account&action=txlist&startblock=0&sort=asc&address=${ address }&apikey=${ key }`
+    const response = await axios.get( url );
     return response.data.result;
 }
 export default getTransactions;

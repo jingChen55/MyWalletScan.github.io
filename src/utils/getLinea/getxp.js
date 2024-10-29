@@ -9,7 +9,6 @@ export const getxp = async ( address ) => {
     address = address.toLowerCase();
     const url = `https://kx58j6x5me.execute-api.us-east-1.amazonaws.com/linea/getUserPointsSearch?user=${ address }`;
 
-
     try {
         const response = await axios.get( url );
         const data = response.data;
@@ -54,5 +53,5 @@ export const getLineaTotalPoints = async () => {
         throw error; // 重新抛出错误以便调用者处理
     }
 };
-// 
+//
 // https://kx58j6x5me.execute-api.us-east-1.amazonaws.com/linea/getLineaTotalPoints

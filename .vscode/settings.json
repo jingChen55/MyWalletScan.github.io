@@ -4,4 +4,6 @@
   "editor.wordWrap": "off",
   "prettier.bracketSameLine": true,
   "prettier.proseWrap": "preserve",
+  "terminal.integrated.fontFamily": "JetBrains Mono NL",
+  "editor.fontFamily": "JetBrains Mono",
 }
