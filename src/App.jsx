@@ -26,9 +26,7 @@ function App() {
     const changeLanguage = ( lng ) => {
       setLocale( lng === "zh" ? zhCN : enUS );
     };
-
     i18n.on( "languageChanged", changeLanguage );
-
     return () => {
       i18n.off( "languageChanged", changeLanguage );
     };

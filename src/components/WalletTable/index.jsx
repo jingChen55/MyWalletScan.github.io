@@ -1,18 +1,7 @@
-import { Table, Space, Tag, Button, Tooltip, notification, Popconfirm, Input } from 'antd';
-import { 
-  CheckCircleOutlined, 
-  CloseCircleOutlined, 
-  DeleteOutlined, 
-  EditOutlined,
-  ReloadOutlined, 
-  SyncOutlined,
-  CopyOutlined,
-  EyeOutlined,
-  EyeInvisibleOutlined
-} from '@ant-design/icons';
+import { Table } from 'antd';
 import { useState } from 'react';
 
-const WalletTable = ({
+const WalletTable = ( {
   data,
   loading,
   selectedKeys,
@@ -21,22 +10,22 @@ const WalletTable = ({
   onDelete,
   columns,
   scroll
-}) => {
-  const [hideColumn, setHideColumn] = useState(true);
+} ) => {
+  const [ hideColumn, setHideColumn ] = useState( true );
 
   const toggleHideColumn = () => {
-    setHideColumn(!hideColumn);
+    setHideColumn( !hideColumn );
   };
 
-  const processedColumns = columns.map(col => {
-    if (typeof col.title === 'function') {
+  const processedColumns = columns.map( col => {
+    if ( typeof col.title === 'function' ) {
       return {
         ...col,
-        title: col.title(data)
+        title: col.title( data )
       };
     }
     return col;
-  });
+  } );
 
   const rowSelection = {
     selectedRowKeys: selectedKeys,

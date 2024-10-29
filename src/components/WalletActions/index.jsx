@@ -1,16 +1,16 @@
-import React from 'react';
-import { Button, Card, Modal, Form, Popconfirm, notification, Input } from 'antd';
-import { 
-  UploadOutlined, 
-  SyncOutlined, 
-  DeleteOutlined, 
-  DownloadOutlined 
+import {
+  DeleteOutlined,
+  DownloadOutlined,
+  SyncOutlined,
+  UploadOutlined
 } from '@ant-design/icons';
 import { exportToExcel } from "@utils";
+import { Button, Card, Form, Input, Modal, Popconfirm, notification } from 'antd';
+import React from 'react';
 
 const { TextArea } = Input;
 
-const WalletActions = ({
+const WalletActions = ( {
   // 基础属性
   type, // 'scroll' | 'linea' 用于区分不同页面
   data,
@@ -25,54 +25,54 @@ const WalletActions = ({
   onDelete,
   // Form 相关
   form,
-}) => {
+} ) => {
   const handleBatchOk = async () => {
     try {
       const values = await form.validateFields();
-      const lines = values.addresses.split("\n");
+      const lines = values.addresses.split( "\n" );
 
-      const processedAddresses = lines.map(line => {
+      const processedAddresses = lines.map( line => {
         line = line.trim();
         let address, name;
-        
-        const parts = line.split(/[\s\t]+/);
-        if (parts.length > 1) {
-          address = parts[parts.length - 1].trim();
-          name = parts.slice(0, -1).join(" ").trim();
+
+        const parts = line.split( /[\s\t]+/ );
+        if ( parts.length > 1 ) {
+          address = parts[ parts.length - 1 ].trim();
+          name = parts.slice( 0, -1 ).join( " " ).trim();
         } else {
           address = line;
           name = "";
         }
 
-        if (!address.startsWith("0x")) {
+        if ( !address.startsWith( "0x" ) ) {
           address = "0x" + address;
         }
 
         return { address, name };
-      });
+      } );
 
       const addressRegex = /^0x[a-fA-F0-9]{40}$/;
       const invalidAddresses = processedAddresses.filter(
-        ({ address }) => !addressRegex.test(address)
+        ( { address } ) => !addressRegex.test( address )
       );
 
-      if (invalidAddresses.length > 0) {
-        throw new Error("存在无效的地址格式");
+      if ( invalidAddresses.length > 0 ) {
+        throw new Error( "存在无效的地址格式" );
       }
 
-      setIsBatchModalVisible(false);
-      await onBatchAdd(processedAddresses);
-    } catch (error) {
-      notification.error({
+      setIsBatchModalVisible( false );
+      await onBatchAdd( processedAddresses );
+    } catch ( error ) {
+      notification.error( {
         message: "错误",
         description: error.message,
         duration: 1,
-      });
+      } );
     }
   };
 
   const handleExport = () => {
-    exportToExcel(data, `${type}Info`);
+    exportToExcel( data, `${ type }Info` );
   };
 
   return (
@@ -82,7 +82,7 @@ const WalletActions = ({
         open={isBatchModalVisible}
         onOk={handleBatchOk}
         onCancel={() => {
-          setIsBatchModalVisible(false);
+          setIsBatchModalVisible( false );
           form.resetFields();
         }}
         okText="添加地址"
@@ -96,35 +96,35 @@ const WalletActions = ({
             rules={[
               {
                 required: true,
-                validator: async (_, value) => {
-                  if (!value) {
-                    return Promise.reject('请输入地址');
+                validator: async ( _, value ) => {
+                  if ( !value ) {
+                    return Promise.reject( '请输入地址' );
                   }
-                  const lines = value.split("\n").filter(line => line.trim());
+                  const lines = value.split( "\n" ).filter( line => line.trim() );
                   const invalidLines = [];
-                  
-                  lines.forEach((line, index) => {
+
+                  lines.forEach( ( line, index ) => {
                     let address;
-                    const parts = line.split(/[\s\t]+/);
-                    if (parts.length > 1) {
-                      address = parts[parts.length - 1].trim();
+                    const parts = line.split( /[\s\t]+/ );
+                    if ( parts.length > 1 ) {
+                      address = parts[ parts.length - 1 ].trim();
                     } else {
                       address = line.trim();
                     }
 
-                    if (!address.startsWith("0x")) {
+                    if ( !address.startsWith( "0x" ) ) {
                       address = "0x" + address;
                     }
 
                     const addressRegex = /^0x[a-fA-F0-9]{40}$/;
-                    if (!addressRegex.test(address)) {
-                      invalidLines.push(index + 1);
+                    if ( !addressRegex.test( address ) ) {
+                      invalidLines.push( index + 1 );
                     }
-                  });
+                  } );
 
-                  if (invalidLines.length) {
+                  if ( invalidLines.length ) {
                     return Promise.reject(
-                      `第 ${invalidLines.join(", ")} 行的地址格式错误，请输入正确的地址`
+                      `第 ${ invalidLines.join( ", " ) } 行的地址格式错误，请输入正确的地址`
                     );
                   }
                   return Promise.resolve();
@@ -143,7 +143,7 @@ const WalletActions = ({
         </Form>
       </Modal>
 
-      <div className={`${type}_footer`}>
+      <div className={`${ type }_footer`}>
         <Card size="small" style={{ width: "100%" }}>
           <div
             style={{
@@ -154,7 +154,7 @@ const WalletActions = ({
           >
             <Button
               type="primary"
-              onClick={() => setIsBatchModalVisible(true)}
+              onClick={() => setIsBatchModalVisible( true )}
               size="large"
               style={{ width: "25%" }}
               icon={<UploadOutlined />}
@@ -170,10 +170,10 @@ const WalletActions = ({
               style={{ width: "25%" }}
               icon={<SyncOutlined />}
             >
-              {`刷新选中地址 (${selectedKeys.length})`}
+              {`刷新选中地址 (${ selectedKeys.length })`}
             </Button>
             <Popconfirm
-              title={`确认删除选中的 ${selectedKeys.length} 个地址？`}
+              title={`确认删除选中的 ${ selectedKeys.length } 个地址？`}
               onConfirm={onDelete}
             >
               <Button
@@ -183,7 +183,7 @@ const WalletActions = ({
                 style={{ width: "25%" }}
                 icon={<DeleteOutlined />}
               >
-                {`删除选中地址 (${selectedKeys.length})`}
+                {`删除选中地址 (${ selectedKeys.length })`}
               </Button>
             </Popconfirm>
             <Button

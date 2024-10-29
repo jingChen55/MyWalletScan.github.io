@@ -1,39 +1,38 @@
-import React from 'react';
-import { Card, Row, Col, Statistic } from 'antd';
+import { Card, Col, Row, Statistic } from 'antd';
+import CountUp from 'react-countup';
 
-const StatsCards = ({ totalPoints, stats }) => {
+import React from 'react';
+const formatter = ( value ) => <CountUp end={value} separator="," />;
+
+const StatsCards = ( { lineaTotalPoints, stats } ) => {
+  console.log( lineaTotalPoints );
+
   return (
     <Row gutter={16} className="stats-cards">
-      <Col span={6}>
-        <Card>
-          <Statistic
-            title="总地址数"
-            value={stats.totalAddresses}
-          />
-        </Card>
-      </Col>
-      <Col span={6}>
+      <Col span={8}>
         <Card>
           <Statistic
             title="总积分"
-            value={stats.totalPoints}
+            value={lineaTotalPoints.total_xp}
           />
         </Card>
       </Col>
-      <Col span={6}>
+      <Col span={8}>
         <Card>
           <Statistic
             title="平均积分"
-            value={stats.averagePoints}
+            value={lineaTotalPoints.average_total_xp}
+            formatter={formatter}
             precision={2}
           />
         </Card>
       </Col>
-      <Col span={6}>
+      <Col span={8}>
         <Card>
           <Statistic
             title="活跃地址"
-            value={stats.activeAddresses}
+            value={lineaTotalPoints.user}
+            formatter={formatter}
           />
         </Card>
       </Col>
