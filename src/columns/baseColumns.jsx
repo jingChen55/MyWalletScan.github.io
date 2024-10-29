@@ -125,9 +125,9 @@ export const createBaseColumns = ( {
         </Spin>
       ),
       sorter: {
-        compare: (a, b) => {
-          const aTime = a.activity?.lastTx ? new Date(a.activity.lastTx).getTime() : 0;
-          const bTime = b.activity?.lastTx ? new Date(b.activity.lastTx).getTime() : 0;
+        compare: ( a, b ) => {
+          const aTime = a.activity?.lastTx ? new Date( a.activity.lastTx ).getTime() : 0;
+          const bTime = b.activity?.lastTx ? new Date( b.activity.lastTx ).getTime() : 0;
           return aTime - bTime;
         },
         multiple: 2 // 设置排序优先级
@@ -146,7 +146,6 @@ export const createBaseColumns = ( {
       sorter: ( a, b ) => ( a.activity?.contractActivity || 0 ) - ( b.activity?.contractActivity || 0 ),
     },
     {
-      title: "fee(E)",
       dataIndex: [ "activity", "fee" ],
       align: "center",
       render: ( text, record, index, data ) => (
