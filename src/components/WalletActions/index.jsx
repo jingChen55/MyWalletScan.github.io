@@ -7,7 +7,7 @@ import {
 import { exportToExcel } from "@utils";
 import { Button, Card, Form, Input, Modal, Popconfirm, notification } from 'antd';
 import React from 'react';
-
+import './index.css';
 const { TextArea } = Input;
 
 const WalletActions = ( {
@@ -143,11 +143,10 @@ const WalletActions = ( {
         </Form>
       </Modal>
 
-      <div className={`${ type }_footer`}>
+      <div className={`${ type }_footer footer-btn-list`}>
         <Card size="small" style={{ width: "100%" }}>
           <div
             style={{
-              width: "100%",
               display: "flex",
               justifyContent: "space-between",
             }}

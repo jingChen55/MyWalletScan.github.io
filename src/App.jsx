@@ -1,43 +1,33 @@
-import WrapperRouter from "@routes";
-import { ConfigProvider } from "antd";
-import enUS from "antd/es/locale/en_US";
-import zhCN from "antd/es/locale/zh_CN";
-import i18n from "i18next";
-import { useEffect, useState } from "react";
-import { initReactI18next } from "react-i18next";
-import "./App.css";
-import en from "./locales/en";
-import zh from "./locales/zh";
-i18n.use( initReactI18next ).init( {
-  resources: {
-    en,
-    zh,
-  },
-  lng: localStorage.getItem( "i18nextLng" ) || "zh",
-  fallbackLng: "en",
-  interpolation: {
-    escapeValue: false,
-  },
-} );
+import React, { useEffect } from 'react';
+import WrapperRouter from './router';
+import { dbManager } from './utils/indexedDB';
 
-function App() {
-  const [ locale, setLocale ] = useState( i18n.language === "zh" ? zhCN : enUS );
-  useEffect( () => {
-    const changeLanguage = ( lng ) => {
-      setLocale( lng === "zh" ? zhCN : enUS );
+// 立即执行数据库初始化
+(async () => {
+  try {
+    console.log('正在初始化数据库...');
+    await dbManager.init();
+    console.log('数据库初始化成功');
+  } catch (error) {
+    console.error('数据库初始化失败:', error);
+  }
+})();
+
+const App = () => {
+  // 在组件挂载时也尝试初始化数据库，以确保数据库已准备就绪
+  useEffect(() => {
+    const initDB = async () => {
+      try {
+        await dbManager.init();
+      } catch (error) {
+        console.error('数据库初始化失败:', error);
+      }
     };
-    i18n.on( "languageChanged", changeLanguage );
-    return () => {
-      i18n.off( "languageChanged", changeLanguage );
-    };
-  }, [] );
-  return (
-    <ConfigProvider locale={locale}>
-      <div className="App">
-        <WrapperRouter />
-      </div>
-    </ConfigProvider>
-  );
-}
+
+    initDB();
+  }, []);
+
+  return <WrapperRouter />;
+};
 
 export default App;

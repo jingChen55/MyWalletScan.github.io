@@ -1,9 +1,9 @@
+import { Button, Image, Modal, Table, Tag, Tooltip } from "antd";
 import React from 'react';
-import {Modal, Table, Button, Tooltip, Tag, Image} from "antd";
-import {useTranslation} from "react-i18next";
+import { useTranslation } from "react-i18next";
 
-const EcosystemModal = (props) => {
-    const {t} = useTranslation();
+const EcosystemModal = ( props ) => {
+    const { t } = useTranslation();
     const data = [
         {
             key: "1",
@@ -86,10 +86,10 @@ const EcosystemModal = (props) => {
             description: "DeBank是一个去中心化的钱包聚合资产平台。",
         }
     ];
-    const categories = Array.from(new Set(data.map(item => item.category))).map(category => ({
+    const categories = Array.from( new Set( data.map( item => item.category ) ) ).map( category => ( {
         text: category,
         value: category,
-    }));
+    } ) );
 
 
     const ecosystemColumns = [
@@ -98,35 +98,35 @@ const EcosystemModal = (props) => {
             dataIndex: "logo",
             key: "logo",
             align: "center",
-            render: (text) => (
+            render: ( text ) => (
                 <Image
                     src={text}
                     alt="logo"
-                    style={{width: '40px', height: '40px', objectFit: 'contain'}}
+                    style={{ width: '40px', height: '40px', objectFit: 'contain' }}
                 />
             ),
         },
         {
-            title: t('protocol'),
+            title: t( 'protocol' ),
             dataIndex: "name",
             key: "name",
             align: "center",
         },
         {
-            title: t('category'),
+            title: t( 'category' ),
             dataIndex: "category",
             key: "category",
             align: "center",
             filters: categories,
-            onFilter: (value, record) => record.category === value,
+            onFilter: ( value, record ) => record.category === value,
         },
         {
-            title: t('link'),
+            title: t( 'link' ),
             dataIndex: "url",
             key: "url",
             align: "center",
-            render: (text) => (
-                <Tooltip title={t('tip')}>
+            render: ( text ) => (
+                <Tooltip title={t( 'tip' )}>
                     <a href={text} target="_blank" rel="noreferrer">
                         {text}
                     </a>
@@ -134,49 +134,49 @@ const EcosystemModal = (props) => {
             ),
         },
         {
-            title: t('intro'),
+            title: t( 'intro' ),
             dataIndex: "description",
             key: "description",
             align: "center",
-            render: (text) => (
+            render: ( text ) => (
                 <Tooltip title={text}>
-                    <span>{text.length > 30 ? `${text.substring(0, 30)}...` : text}</span>
+                    <span>{text.length > 30 ? `${ text.substring( 0, 30 ) }...` : text}</span>
                 </Tooltip>
             ),
         },
     ];
 
 
-    const {open, onCancel} = props;
+    const { open, onCancel } = props;
 
     return (
         <Modal
             title={
                 <>
-                    {t('ecosystem')}
+                    {t( 'ecosystem' )}
                     <Tag color="blue"
-                         style={{marginLeft: "8px", fontWeight: 'bold'}}> {t('tip2')} </Tag>
+                        style={{ marginLeft: "8px", fontWeight: 'bold' }}> {t( 'tip2' )} </Tag>
                 </>}
             open={open} // 注意，这里应该使用visible属性代替open
             onCancel={onCancel}
             footer={[
                 <Button onClick={onCancel} type="primary" key="close">
-                    {t('close')}
+                    {t( 'close' )}
                 </Button>,
             ]}
             width={1200}
             centered
             closable={false}
-            bodyStyle={{height: "500px", overflow: "auto"}}
+            bodyStyle={{ height: "500px", overflow: "auto" }}
         >
             <Table
                 columns={ecosystemColumns}
                 pagination={false}
                 size="small"
                 dataSource={data}
-                style={{margin: '16px'}}
+                style={{ margin: '16px' }}
             />
-            <div style={{textAlign: "center", marginTop: "16px", fontWeight: 'bold'}}>
+            <div style={{ textAlign: "center", marginTop: "16px", fontWeight: 'bold' }}>
                 <p>Wait more...</p>
             </div>
         </Modal>

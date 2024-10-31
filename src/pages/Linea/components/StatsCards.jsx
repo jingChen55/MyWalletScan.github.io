@@ -8,7 +8,7 @@ const StatsCards = ( { lineaTotalPoints, stats } ) => {
   console.log( lineaTotalPoints );
 
   return (
-    <Row gutter={16} className="stats-cards">
+    <Row gutter={[ 16, 16 ]} className="stats-cards">
       <Col span={8}>
         <Card>
           <Statistic

@@ -1,32 +1,14 @@
 import { Table } from 'antd';
-import { useState } from 'react';
+import PropTypes from 'prop-types';
 
-const WalletTable = ( {
-  data,
+const WalletTable = ({ 
+  data, 
+  columns, 
   loading,
   selectedKeys,
   onSelectChange,
-  onRefresh,
-  onDelete,
-  columns,
   scroll
-} ) => {
-  const [ hideColumn, setHideColumn ] = useState( true );
-
-  const toggleHideColumn = () => {
-    setHideColumn( !hideColumn );
-  };
-
-  const processedColumns = columns.map( col => {
-    if ( typeof col.title === 'function' ) {
-      return {
-        ...col,
-        title: col.title( data )
-      };
-    }
-    return col;
-  } );
-
+}) => {
   const rowSelection = {
     selectedRowKeys: selectedKeys,
     onChange: onSelectChange,
@@ -35,15 +17,30 @@ const WalletTable = ( {
   return (
     <Table
       rowSelection={rowSelection}
+      columns={columns}
       dataSource={data}
-      columns={processedColumns}
-      pagination={false}
-      bordered
-      size="small"
-      scroll={scroll}
       loading={loading}
+      rowKey={(record) => record.address}
+      pagination={false}
+      scroll={scroll}
     />
   );
+};
+
+WalletTable.propTypes = {
+  data: PropTypes.array.isRequired,
+  columns: PropTypes.array.isRequired,
+  loading: PropTypes.bool,
+  selectedKeys: PropTypes.array,
+  onSelectChange: PropTypes.func,
+  scroll: PropTypes.object
+};
+
+WalletTable.defaultProps = {
+  loading: false,
+  selectedKeys: [],
+  onSelectChange: () => {},
+  scroll: {}
 };
 
 export default WalletTable; 

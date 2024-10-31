@@ -19,10 +19,15 @@ export const createBaseColumns = ( {
 } ) => {
   // 计算 fee 总和的函数
   const calculateTotalFee = ( data ) => {
-    return data.reduce( ( total, record ) => {
-      const fee = parseFloat( record.activity?.fee ) || 0;
+    // 如果传入的是列配置信息，返回 0
+    if (!Array.isArray(data) || !data.length) {
+      return 0;
+    }
+    
+    return data.reduce((total, item) => {
+      const fee = item.activity?.fee ? parseFloat(item.activity.fee) : 0;
       return total + fee;
-    }, 0 );
+    }, 0);
   };
 
   return [
@@ -148,7 +153,7 @@ export const createBaseColumns = ( {
     {
       dataIndex: [ "activity", "fee" ],
       align: "center",
-      render: ( text, record, index, data ) => (
+      render: ( text, record ) => (
         <Spin spinning={record.loading || false} size="small">
           {text ? (
             <Tooltip title={`${ text }ETH`}>
@@ -158,12 +163,12 @@ export const createBaseColumns = ( {
         </Spin>
       ),
       sorter: ( a, b ) => ( parseFloat( a.activity?.fee ) || 0 ) - ( parseFloat( b.activity?.fee ) || 0 ),
-      // 添加列头总和显示
-      title: ( data ) => (
+      // 修改表头渲染逻辑
+      title: ( _, __, tableData ) => (
         <div>
           <div>fee(E)</div>
           <div style={{ fontSize: '12px', color: '#888' }}>
-            总计: {formatNumber( calculateTotalFee( data ) )}
+            总计: {formatNumber( calculateTotalFee( tableData ) )}
           </div>
         </div>
       ),
@@ -198,18 +203,25 @@ export const createBaseColumns = ( {
       title: "操作",
       key: "action",
       align: "center",
-      render: ( text, record ) => (
-        <Space>
+      width: 120,
+      render: (text, record) => (
+        <Space size="small" style={{ display: 'flex', justifyContent: 'center' }}>
           <Popconfirm
             title={"确认删除？"}
-            onConfirm={() => onDelete?.( record.address )}
+            onConfirm={() => onDelete?.(record.address)}
           >
-            <Button icon={<DeleteOutlined />} />
+            <Button 
+              icon={<DeleteOutlined />}
+              size="middle"
+              style={{ minWidth: '32px' }}
+            />
           </Popconfirm>
           <Button
             icon={<ReloadOutlined />}
-            onClick={() => onRefresh?.( record.address )}
+            onClick={() => onRefresh?.(record.address)}
             loading={record.loading}
+            size="middle"
+            style={{ minWidth: '32px' }}
           />
         </Space>
       ),

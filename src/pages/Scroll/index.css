@@ -1,6 +1,35 @@
-.linea_footer {
-    position: fixed;
-    bottom: 0;
-    width: 100%;
-    z-index: 2;
+.scroll-content {
+  padding: 20px;
+  min-height: 100vh;
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+/* 确保内容区域不会超出容器 */
+.scroll-content>div {
+  max-width: 100%;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+/* 确保表格容器不会溢出 */
+.ant-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+/* 确保底部操作栏不会溢出 */
+.wallet-actions {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 16px;
+  position: sticky;
+  bottom: 0;
+  background: #fff;
+  z-index: 10;
+  margin: 0;
+  left: 0;
+  right: 0;
 }

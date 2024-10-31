@@ -35,8 +35,13 @@ const MenuHeader = () => {
       key: "linea",
     },
     {
-      label: "Scroll",
-      key: "Scroll",
+      label: "Wallet",
+      key: "wallet",
+    },
+
+    {
+      label: "transfer",
+      key: "batch-transfer",
     },
     {
       label: "Base",

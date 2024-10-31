@@ -1,24 +1,42 @@
-import {useState, useEffect, useRef} from "react";
-import {Card, Col, Row, Select} from "antd";
+import { Area, Column } from '@antv/g2plot';
+import { getEthPrice } from "@utils";
+import { dbConfig, get, getAllKeys, initDB } from "@utils/indexedDB/main.js";
+import { Card, Col, Row, Select } from "antd";
 import moment from "moment";
-import {Area, Column} from '@antv/g2plot';
-import {getEthPrice} from "@utils";
-import {dbConfig, get, getAllKeys, initDB} from "@utils/indexedDB/main.js";
+import { useEffect, useRef, useState, useMemo } from "react";
 
-
-const createDateRange = (start, end) => {
-    let currentDate = moment(start).startOf('day');
-    const endDate = moment(end).startOf('day');
-    let dateRange = [];
-
-    while (currentDate.isSameOrBefore(endDate)) {
-        dateRange.push({date: currentDate.format('YYYY-MM-DD'), value: 0});
-        currentDate = currentDate.add(1, 'days');
-    }
-
-    return dateRange;
+const CHART_CONFIG = {
+  height: 300,
+  slider: {
+    start: 0,
+    end: 1,
+    formatter: (v) => moment(v).format('YYYY-MM-DD'),
+  }
 }
 
+const useDateRange = (transactions) => {
+  return useMemo(() => {
+    if (!transactions.length) return []
+    const sortedTransactions = transactions.sort((a, b) => 
+      moment(a.receivedAt).isAfter(b.receivedAt) ? 1 : -1
+    )
+    const startDate = sortedTransactions[0].receivedAt
+    const endDate = sortedTransactions[sortedTransactions.length - 1].receivedAt
+    
+    let currentDate = moment(startDate).startOf('day')
+    const endMoment = moment(endDate).startOf('day')
+    const dateRange = []
+
+    while (currentDate.isSameOrBefore(endMoment)) {
+      dateRange.push({
+        date: currentDate.format('YYYY-MM-DD'),
+        value: 0
+      })
+      currentDate = currentDate.add(1, 'days')
+    }
+    return dateRange
+  }, [transactions])
+}
 
 const DailyTransaction = ({transactions, ethPrice}) => {
     const containerRef = useRef(null);
@@ -257,54 +275,59 @@ const ZksyncMyAddress = () => {
     const [selectAddress, setSelectAddress] = useState('')
     const [transactions, setTransactions] = useState([])
     const [ethPrice, setEthPrice] = useState(0)
+    const [loading, setLoading] = useState(false)
+
     useEffect(() => {
-        getEthPrice().then((res) => {
-            setEthPrice(Number(res))
-        })
+        getEthPrice().then(setEthPrice)
     }, [])
+
     useEffect(() => {
-        getZkSyncAllAddress().then((res) => {
-            setAddress(res)
-        })
-    }, []);
+        getZkSyncAllAddress().then(setAddress)
+    }, [])
+
+    const handleAddressChange = async (value) => {
+        try {
+            setLoading(true)
+            setSelectAddress(value)
+            const res = await getAddressTranscation(value)
+            setTransactions(res)
+        } catch (error) {
+            console.error('Failed to fetch transactions:', error)
+        } finally {
+            setLoading(false)
+        }
+    }
+
     return (
         <div>
             <Select
-                defaultValue="选择地址展示数据."
-                style={{
-                    width: "100%",
-                    marginTop: "20px"
-                }}
-                onChange={(value) => {
-                    setSelectAddress(value)
-                    getAddressTranscation(value).then((res) => {
-                        setTransactions(res)
-                    })
-                }}
-                notFoundContent={"暂无数据,请先刷新您的zkSync获取数据"}
-                options={
-                    address.map((item) => {
-                        return {
-                            value: item,
-                            label: item
-                        }
-                    })
-                }
+                value={selectAddress || undefined}
+                placeholder="选择地址展示数据"
+                style={{ width: "100%", marginTop: "20px" }}
+                onChange={handleAddressChange}
+                loading={loading}
+                notFoundContent="暂无数据,请先刷新您的zkSync获取数据"
+                options={address.map((item) => ({
+                    value: item,
+                    label: item
+                }))}
             />
-            <Row gutter={16} style={{marginTop: 20}}>
-                <Col xs={24} md={12}>
-                    {selectAddress && <DailyTransaction transactions={transactions} ethPrice={ethPrice}/>}
-                </Col>
-                <Col xs={24} md={12}>
-                    {selectAddress && <CumulativeGasFee transactions={transactions} ethPrice={ethPrice}/>}
-                </Col>
-                <Col xs={24} md={12}>
-                    {selectAddress && <DailyTransactions transactions={transactions}/>}
-                </Col>
-                <Col xs={24} md={12}>
-                    {selectAddress && <CumulativeVolume transactions={transactions}/>}
-                </Col>
-            </Row>
+            {selectAddress && (
+                <Row gutter={16} style={{marginTop: 20}}>
+                    <Col xs={24} md={12}>
+                        <DailyTransaction transactions={transactions} ethPrice={ethPrice}/>
+                    </Col>
+                    <Col xs={24} md={12}>
+                        <CumulativeGasFee transactions={transactions} ethPrice={ethPrice}/>
+                    </Col>
+                    <Col xs={24} md={12}>
+                        <DailyTransactions transactions={transactions}/>
+                    </Col>
+                    <Col xs={24} md={12}>
+                        <CumulativeVolume transactions={transactions}/>
+                    </Col>
+                </Row>
+            )}
         </div>
     )
 }

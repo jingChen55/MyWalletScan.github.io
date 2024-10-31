@@ -1,105 +1,38 @@
-import {useEffect, useRef, useState} from "react";
-import {Alert, Card, Col, Row, Spin} from "antd";
-import {Pie} from '@antv/g2plot';
-import axios from "axios";
-
-
-const PieChart = ({data, title}) => {
-    const containerRef = useRef(null);
-    useEffect(() => {
-        if (containerRef.current) {
-            const chart = new Pie(containerRef.current, {
-                data,
-                angleField: 'value',
-                colorField: 'type',
-                radius: 0.8,
-                label: {
-                    type: 'inner',
-                    offset: '-30%',
-                    content: '{value}',
-                    style: {
-                        textAlign: 'center',
-                        fontSize: 14,
-                    }
-                },
-                interactions: [{type: 'element-active'}],
-                legend: {
-                    layout: 'horizontal',
-                    position: 'bottom',
-                }
-            })
-            chart.render();
-        }
-        return () => {
-            if (containerRef.current) {
-                containerRef.current.innerHTML = '';
-            }
-        };
-    }, [data]);
-
-    return (
-        <Card title={title}>
-            <div ref={containerRef} style={{height: '300px'}}></div>
-        </Card>
-    );
-};
-
+import { transferETH } from '../../utils/ethTransfer';
 
 const ZkBridge = () => {
-    const objectData = [
-        {key: "lastHourlyTxs", title: "过去1小数Tx"},
-        {key: "currentDayTxs", title: "当天Tx"},
-        {key: "prevDayTxs", title: "前一天Tx"},
-        {key: "dayBeforeLastTxs", title: "前两天Tx"},
-        {key: "weeklyTxs", title: "一周Tx"},
-        {key: "monthlyTxs", title: "一月Tx"},
-    ]
-    const [data, setData] = useState([]);
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState(null);
 
-    useEffect(() => {
-        const url = "https://bridges.llama.fi/bridge/26"
-        const fetchData = async () => {
-            setIsLoading(true);
-            try {
-                const response = await axios.get(url);
-                const eraData = response.data['chainBreakdown']['zkSync Era']
-                objectData.forEach((item) => {
-                    setData((prev) => [...prev, {
-                        title: item.title, value: [
-                            {type: 'L2 Withdrawal To L1', value: eraData[item.key]['deposits']},
-                            {type: 'L1 Deposit To L2', value: eraData[item.key]['withdrawals']},
-                        ]
-                    }])
+    const handleTransfer = async () => {
+        try {
+            transferETH('0x接收方地址', '0.1')
+                .then(result => {
+                    switch (result.status) {
+                        case 'START':
+                            console.log('开始转账:', result);
+                            // 处理开始转账状态
+                            break;
+                        case 'PENDING':
+                            console.log('转账处理中:', result);
+                            // 处理转账中状态
+                            break;
+                        case 'SUCCESS':
+                            console.log('转账成功:', result);
+                            // 处理转账成功状态
+                            break;
+                    }
+                })
+                .catch(error => {
+                    console.error('转账错误:', error);
+                    // 处理错误状态
                 });
-                setError(null);
-            } catch (err) {
-                console.error("Error fetching data: ", err);
-                setError("Error fetching data.");
-            }
-            setIsLoading(false);
+        } catch (error) {
+            console.error('处理错误:', error);
         }
-        fetchData();
-    }, []);
-
-    if (error) {
-        return <Alert message="Error" description={error} type="error" showIcon/>;
-    }
+    };
 
     return (
         <div>
-            <Spin spinning={isLoading}>
-                <Row gutter={[16, 16]}>
-                    {data.map((item, index) => {
-                        return (
-                            <Col xs={24} sm={12} md={6} key={index}>
-                                <PieChart data={item.value} title={item.title}/>
-                            </Col>
-                        );
-                    })}
-                </Row>
-            </Spin>
+
         </div>
     )
 }

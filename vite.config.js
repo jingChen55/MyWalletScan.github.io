@@ -10,7 +10,7 @@ export default defineConfig( {
             '@': resolve( __dirname, './src' ),
             '@components': resolve( __dirname, './src/components' ),
             '@layout': resolve( __dirname, './src/layout' ),
-            '@routes': resolve( __dirname, './src/routes' ),
+            '@routes': resolve( __dirname, './src/router' ),
             '@pages': resolve( __dirname, './src/pages' ),
             '@utils': resolve( __dirname, './src/utils' ),
             '@store': resolve( __dirname, './src/store' ),

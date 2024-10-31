@@ -1,4 +1,3 @@
-import ErrorBoundary from "@components/ErrorBoundary";
 import { exportToExcel } from "@utils";
 import { calculateStats } from '@utils/lineaHelpers';
 import { Form, Layout, notification } from "antd";
@@ -148,37 +147,38 @@ const Linea = () => {
   };
 
   return (
-    <ErrorBoundary>
-      <Layout>
-        <Content className="linea-content">
-          <StatsCards lineaTotalPoints={lineaTotalPoints} stats={calculateStats( walletData )} />
 
-          <WalletTable
-            data={walletData}
-            loading={loading}
-            selectedKeys={selectedKeys}
-            onRefresh={handleRefresh}
-            onDelete={handleDelete}
-            columns={columns}
-            scroll={{ x: 1500, y: '80vh' }}
-            onSelectChange={setSelectedKeys}
-          />
+    <Content className="linea-content">
+      <div className="linea-container">
+        <StatsCards lineaTotalPoints={lineaTotalPoints} stats={calculateStats( walletData )} />
 
-          <WalletActions
-            type="linea"
-            data={walletData}
-            loading={loading}
-            selectedKeys={selectedKeys}
-            isBatchModalVisible={state.isBatchModalVisible}
-            setIsBatchModalVisible={( visible ) => dispatch( { type: 'SET_BATCH_MODAL', payload: visible } )}
-            onBatchAdd={handleBatchAdd}
-            onRefresh={handleBatchRefresh}
-            onDelete={handleDeleteSelected}
-            form={batchForm}
-          />
-        </Content>
-      </Layout>
-    </ErrorBoundary>
+        <WalletTable
+          data={walletData}
+          loading={loading}
+          selectedKeys={selectedKeys}
+          onRefresh={handleRefresh}
+          onDelete={handleDelete}
+          columns={columns}
+          scroll={{ x: 1500, y: '80vh' }}
+          onSelectChange={setSelectedKeys}
+        />
+      </div>
+
+      <div className="wallet-actions-wrapper">
+        <WalletActions
+          type="linea"
+          data={walletData}
+          loading={loading}
+          selectedKeys={selectedKeys}
+          isBatchModalVisible={state.isBatchModalVisible}
+          setIsBatchModalVisible={( visible ) => dispatch( { type: 'SET_BATCH_MODAL', payload: visible } )}
+          onBatchAdd={handleBatchAdd}
+          onRefresh={handleBatchRefresh}
+          onDelete={handleDeleteSelected}
+          form={batchForm}
+        />
+      </div>
+    </Content>
   );
 };
 

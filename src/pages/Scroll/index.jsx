@@ -318,19 +318,16 @@ const Scroll = () => {
   return (
     <div>
       <Content>
-        <div style={{ marginBottom: "50px" }}>
-          <WalletTable
-            data={data}
-            loading={loading.table}
-            selectedKeys={selectedKeys}
-            onRefresh={handleRefresh}
-            onDelete={handleDelete}
-            columns={allColumns}
-            scroll={{ x: 1500, y: '80vh' }}
-            onSelectChange={setSelectedKeys}
-          />
-        </div>
-
+        <WalletTable
+          data={data}
+          loading={loading.table}
+          selectedKeys={selectedKeys}
+          onRefresh={handleRefresh}
+          onDelete={handleDelete}
+          columns={allColumns}
+          scroll={{ x: 1500, y: '80vh' }}
+          onSelectChange={setSelectedKeys}
+        />
         <WalletActions
           type="scroll"
           data={data}

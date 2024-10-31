@@ -5,3 +5,8 @@
 .ant-spin-nested-loading {
   background: transparent !important;
 }
+
+:where(.css-dev-only-do-not-override-yp8pcc).ant-table-wrapper .ant-table-tbody>tr.ant-table-row-selected>th,
+:where(.css-dev-only-do-not-override-yp8pcc).ant-table-wrapper .ant-table-tbody>tr.ant-table-row-selected>td {
+  background: transparent !important;
+}
