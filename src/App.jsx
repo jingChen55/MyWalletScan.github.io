@@ -1,6 +1,8 @@
 import React, { useEffect } from 'react';
 import WrapperRouter from './router';
 import { dbManager } from './utils/indexedDB';
+import { ConfigProvider } from 'antd';
+import zhCN from 'antd/locale/zh_CN';
 
 // 立即执行数据库初始化
 (async () => {
@@ -27,7 +29,11 @@ const App = () => {
     initDB();
   }, []);
 
-  return <WrapperRouter />;
+  return (
+    <ConfigProvider locale={zhCN}>
+      <WrapperRouter />
+    </ConfigProvider>
+  );
 };
 
 export default App;

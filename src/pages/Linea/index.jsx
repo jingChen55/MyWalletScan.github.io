@@ -1,3 +1,4 @@
+import ErrorBoundary from "@/components/ErrorBoundary";
 import { exportToExcel } from "@utils";
 import { calculateStats } from '@utils/lineaHelpers';
 import { Form, Layout, notification } from "antd";

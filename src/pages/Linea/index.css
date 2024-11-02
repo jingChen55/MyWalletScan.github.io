@@ -7,7 +7,7 @@
 }
 
 /* 确保内容区域不会超出容器 */
-.linea-content>div {
+.linea-content > div {
   max-width: 100%;
   margin: 0 auto;
   box-sizing: border-box;
@@ -34,12 +34,12 @@
   right: 0;
 }
 
-/* 响应式布局 */  
-@media screen and (max-width: 768px) {                 
+/* 响应式布局 */
+@media screen and (max-width: 768px) {
   .linea-content {
     padding: 10px;
   }
-
+  
   .wallet-actions {
     padding: 8px;
   }
@@ -50,7 +50,7 @@
   width: 100%;
   margin-bottom: 20px;
   display: flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   gap: 16px;
 }
 

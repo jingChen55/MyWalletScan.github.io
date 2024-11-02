@@ -19,13 +19,13 @@ import {
   Typography,
   message
 } from 'antd';
-import React, { useState, useEffect } from 'react';
-import { decryptFromStorage, encryptForStorage, decryptPrivateKey } from '../../utils/cryptoUtils';
-import { JsonRpcProvider, Wallet, formatEther } from 'ethers';
-import { dbManager } from '../../utils/indexedDB';
-import { exportToExcel } from '../../utils/exportUtils';
-import { CONFIG, getWorkingRPC } from '../../config';
+import { JsonRpcProvider, formatEther } from 'ethers';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { getWorkingRPC } from '../../config';
+import { decryptFromStorage, decryptPrivateKey, encryptForStorage } from '../../utils/cryptoUtils';
+import { exportToExcel } from '../../utils/exportUtils';
+import { dbManager } from '../../utils/indexedDB';
 
 const { Text, Title, Paragraph } = Typography;
 const { TextArea } = Input;
@@ -95,10 +95,10 @@ const WalletList = () => {
       title: '钱包名称',
       dataIndex: 'name',
       key: 'name',
-      render: (name, record) => (
-        <Button 
-          type="link" 
-          onClick={() => navigate(`/wallet/${record.address}`)}
+      render: ( name, record ) => (
+        <Button
+          type="link"
+          onClick={() => navigate( `/wallet/${ record.address }` )}
         >
           {name}
         </Button>
@@ -108,11 +108,11 @@ const WalletList = () => {
       title: '地址',
       dataIndex: 'address',
       key: 'address',
-      render: (address) => (
+      render: ( address ) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Button 
-            type="link" 
-            onClick={() => navigate(`/wallet/${address}`)}
+          <Button
+            type="link"
+            onClick={() => navigate( `/wallet/${ address }` )}
           >
             <Text ellipsis style={{ width: '180px' }}>{address}</Text>
           </Button>
@@ -120,9 +120,9 @@ const WalletList = () => {
             <Button
               icon={<CopyOutlined />}
               type="text"
-              onClick={(e) => {
+              onClick={( e ) => {
                 e.stopPropagation();
-                copyAddress(address);
+                copyAddress( address );
               }}
             />
           </Tooltip>
@@ -213,61 +213,34 @@ const WalletList = () => {
       try {
         // 先加载钱包列表
         const savedWallets = await dbManager.getAllWallets();
-        const sortedWallets = savedWallets.sort((a, b) => {
-          if (a.orderIndex !== undefined && b.orderIndex !== undefined) {
+        const sortedWallets = savedWallets.sort( ( a, b ) => {
+          if ( a.orderIndex !== undefined && b.orderIndex !== undefined ) {
             return a.orderIndex - b.orderIndex;
           }
-          if (a.addedTime && b.addedTime) {
-            return new Date(a.addedTime) - new Date(b.addedTime);
+          if ( a.addedTime && b.addedTime ) {
+            return new Date( a.addedTime ) - new Date( b.addedTime );
           }
           return 0;
-        });
-        setWallets(sortedWallets || []);
+        } );
+        setWallets( sortedWallets || [] );
 
         // 如果有钱包，使用第一个钱包的地址测试 RPC
-        if (sortedWallets.length > 0) {
-          const rpcUrl = await getWorkingRPC(sortedWallets[0].address);
-          const provider = new JsonRpcProvider(rpcUrl);
-          setProvider(provider);
+        if ( sortedWallets.length > 0 ) {
+          const rpcUrl = await getWorkingRPC( sortedWallets[ 0 ].address );
+          const provider = new JsonRpcProvider( rpcUrl );
+          setProvider( provider );
         }
-      } catch (error) {
-        console.error('初始化失败:', error);
-        message.error('初始化失败: ' + error.message);
+      } catch ( error ) {
+        console.error( '初始化失败:', error );
+        message.error( '初始化失败: ' + error.message );
       } finally {
-        setIsLoading(false);
+        setIsLoading( false );
       }
     };
 
     init();
   }, [] );
 
-  // 添加钱包
-  const handleAddWallet = async ( values ) => {
-    try {
-      const wallet = new Wallet( values.privateKey, provider );
-      const balance = await provider.getBalance( values.address );
-
-      // 获取当前最大序号
-      const maxOrderIndex = Math.max(...wallets.map(w => w.orderIndex || 0), -1);
-
-      const newWallet = {
-        key: values.address,
-        address: values.address,
-        name: values.name,
-        encryptedPrivateKey: encryptForStorage( values.privateKey, "1234" ),
-        balance: formatEther( balance ),
-        orderIndex: maxOrderIndex + 1,  // 添加序号
-        addedTime: new Date().toISOString()  // 添加时间戳
-      };
-
-      await dbManager.addWallet( newWallet );
-      setWallets( prev => [ ...prev, newWallet ].sort((a, b) => a.orderIndex - b.orderIndex) );
-      message.success( '添加钱包成功' );
-    } catch ( error ) {
-      console.error( '添加钱包失败:', error );
-      message.error( '添加钱包失败' );
-    }
-  };
 
   // 批量导入钱包
   const handleBatchImport = async ( values ) => {
@@ -277,12 +250,12 @@ const WalletList = () => {
       const errors = [];
 
       // 获取当前最大序号
-      const maxOrderIndex = Math.max(...wallets.map(w => w.orderIndex || 0), -1);
+      const maxOrderIndex = Math.max( ...wallets.map( w => w.orderIndex || 0 ), -1 );
 
       for ( let [ index, line ] of lines.entries() ) {
         try {
           const [ number, address, encryptedPrivateKey ] = line.trim().split( /\s+/ );
-          
+
           let privateKey = null;
           if ( encryptedPrivateKey ) {
             try {
@@ -294,14 +267,12 @@ const WalletList = () => {
             }
           }
 
-          const balance = await provider.getBalance( address );
-          
           newWallets.push( {
             key: address,
             address: address,
             name: `钱包 ${ number }`,
-            encryptedPrivateKey: privateKey ? encryptForStorage( privateKey, "1234" ) : null,
-            balance: formatEther( balance ),
+            encryptedPrivateKey: privateKey ? encryptForStorage( privateKey, values.password ) : null,
+            balance: 0,
             orderIndex: maxOrderIndex + index + 1,  // 添加序号
             addedTime: new Date().toISOString()  // 添加时间戳
           } );
@@ -313,7 +284,7 @@ const WalletList = () => {
 
       if ( newWallets.length > 0 ) {
         await dbManager.addWallets( newWallets );
-        setWallets( prev => [ ...prev, ...newWallets ].sort((a, b) => a.orderIndex - b.orderIndex) );
+        setWallets( prev => [ ...prev, ...newWallets ].sort( ( a, b ) => a.orderIndex - b.orderIndex ) );
         message.success( `成功导入 ${ newWallets.length } 个钱包` );
       }
 
@@ -371,75 +342,75 @@ const WalletList = () => {
   };
 
   // 修改更新余额函数
-  const handleUpdateBalance = async (address) => {
+  const handleUpdateBalance = async ( address ) => {
     try {
       // 获取所有网络配置
-      const networks = await dbManager.getAllItems('networks');
+      const networks = await dbManager.getAllItems( 'networks' );
       let totalBalance = 0;
 
       // 显示加载状态
-      message.loading({ content: '正在获取余额...', key: 'updateBalance' });
+      message.loading( { content: '正在获取余额...', key: 'updateBalance' } );
 
       // 获取所有网络的余额
-      for (const network of networks) {
+      for ( const network of networks ) {
         try {
           // 为每个网络创建新的 provider
-          const provider = new JsonRpcProvider(network.rpc);
+          const provider = new JsonRpcProvider( network.rpc );
           // 添加延迟避免请求过快
-          await new Promise(resolve => setTimeout(resolve, 500));
-          const balance = await provider.getBalance(address);
-          console.log(`${network.name} 余额:`, formatEther(balance));
-          totalBalance += parseFloat(formatEther(balance));
-        } catch (error) {
-          console.error(`获取 ${network.name} 余额失败:`, error);
+          await new Promise( resolve => setTimeout( resolve, 500 ) );
+          const balance = await provider.getBalance( address );
+          console.log( `${ network.name } 余额:`, formatEther( balance ) );
+          totalBalance += parseFloat( formatEther( balance ) );
+        } catch ( error ) {
+          console.error( `获取 ${ network.name } 余额失败:`, error );
         }
       }
 
       // 更新钱包余额
-      const updatedWallets = wallets.map(w => 
+      const updatedWallets = wallets.map( w =>
         w.address === address ? { ...w, balance: totalBalance.toString() } : w
       );
-      setWallets(updatedWallets);
-      await dbManager.addWallets(updatedWallets);
-      message.success({ content: '更新余额成功', key: 'updateBalance' });
-    } catch (error) {
-      console.error('更新余额失败:', error);
-      message.error({ content: '更新余额失败', key: 'updateBalance' });
+      setWallets( updatedWallets );
+      await dbManager.addWallets( updatedWallets );
+      message.success( { content: '更新余额成功', key: 'updateBalance' } );
+    } catch ( error ) {
+      console.error( '更新余额失败:', error );
+      message.error( { content: '更新余额失败', key: 'updateBalance' } );
     }
   };
 
   // 修改批量更新余额函数
   const handleBatchUpdateBalance = async () => {
     try {
-      const networks = await dbManager.getAllItems('networks');
-      message.loading({ content: '正在批量更新余额...', key: 'batchUpdate' });
+      const networks = await dbManager.getAllItems( 'networks' );
+      message.loading( { content: '正在批量更新余额...', key: 'batchUpdate' } );
 
       const updatedWallets = await Promise.all(
-        wallets.map(async wallet => {
+        wallets.map( async wallet => {
           let totalBalance = 0;
-          for (const network of networks) {
+          for ( const network of networks ) {
             try {
               // 为每个网络创建新的 provider
-              const provider = new JsonRpcProvider(network.rpc);
+              const provider = new JsonRpcProvider( network.rpc );
               // 添加延迟避免请求过快
-              await new Promise(resolve => setTimeout(resolve, 500));
-              const balance = await provider.getBalance(wallet.address);
-              console.log(`${wallet.address} 在 ${network.name} 的余额:`, formatEther(balance));
-              totalBalance += parseFloat(formatEther(balance));
-            } catch (error) {
-              console.error(`获取 ${network.name} 余额失败:`, error);
+              await new Promise( resolve => setTimeout( resolve, 500 ) );
+              const balance = await provider.getBalance( wallet.address );
+              console.log( `${ wallet.address } 在 ${ network.name } 的余额:`, formatEther( balance ) );
+              totalBalance += parseFloat( formatEther( balance ) );
+            } catch ( error ) {
+              console.error( `获取 ${ network.name } 余额失败:`, error );
             }
           }
           return { ...wallet, balance: totalBalance.toString() };
-        })
+        } )
       );
 
-      setWallets(updatedWallets);
-      await dbManager.addWallets(updatedWallets);
-      message.success({ content: '批量更新余额成功', key: 'batchUpdate' });
-    } catch (error) {
-      console.error('批量更新余额失败:', error);
-      message.error({ content: '批量更新余额失败', key: 'batchUpdate' });
+      setWallets( updatedWallets );
+      await dbManager.addWallets( updatedWallets );
+      message.success( { content: '批量更新余额成功', key: 'batchUpdate' } );
+    } catch ( error ) {
+      console.error( '批量更新余额失败:', error );
+      message.error( { content: '批量更新余额失败', key: 'batchUpdate' } );
     }
   };
 
@@ -510,59 +481,6 @@ const WalletList = () => {
         pagination={false}
       />
 
-      {/* 添加钱包模态框 */}
-      <Modal
-        title="添加新钱包"
-        open={isModalVisible}
-        onCancel={() => {
-          setIsModalVisible( false );
-          form.resetFields();
-        }}
-        footer={null}
-      >
-        <Form
-          form={form}
-          onFinish={( values ) => {
-            handleAddWallet( values );
-            setIsModalVisible( false );
-            form.resetFields();
-          }}
-          layout="vertical"
-        >
-          <Form.Item
-            name="name"
-            label="钱包名称"
-            rules={[ { required: true, message: '请输入钱包名称' } ]}
-          >
-            <Input placeholder="请输入钱包名称" />
-          </Form.Item>
-          <Form.Item
-            name="address"
-            label="钱包地址"
-            rules={[
-              { required: true, message: '请输入钱包地址' },
-              { pattern: /^0x[0-9a-fA-F]{40}$/, message: '请输入有效的以太坊地址' }
-            ]}
-          >
-            <Input placeholder="请输入钱包地址" />
-          </Form.Item>
-          <Form.Item
-            name="privateKey"
-            label="私钥"
-            rules={[
-              { required: true, message: '请输入私钥' },
-              { pattern: /^(0x)?[0-9a-fA-F]{64}$/, message: '请输入有效的私钥' }
-            ]}
-          >
-            <Input.Password placeholder="请输入私钥" />
-          </Form.Item>
-          <Form.Item>
-            <Button type="primary" htmlType="submit" block>
-              添加
-            </Button>
-          </Form.Item>
-        </Form>
-      </Modal>
 
       {/* 批量导入模态框 */}
       <Modal
