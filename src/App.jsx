@@ -1,33 +1,34 @@
-import React, { useEffect } from 'react';
-import WrapperRouter from './router';
-import { dbManager } from './utils/indexedDB';
 import { ConfigProvider } from 'antd';
 import zhCN from 'antd/locale/zh_CN';
+import React, { useEffect } from 'react';
+import './App.css';
+import WrapperRouter from './router';
+import { dbManager } from './utils/indexedDB';
 
 // 立即执行数据库初始化
-(async () => {
+( async () => {
   try {
-    console.log('正在初始化数据库...');
+    console.log( '正在初始化数据库...' );
     await dbManager.init();
-    console.log('数据库初始化成功');
-  } catch (error) {
-    console.error('数据库初始化失败:', error);
+    console.log( '数据库初始化成功' );
+  } catch ( error ) {
+    console.error( '数据库初始化失败:', error );
   }
-})();
+} )();
 
 const App = () => {
   // 在组件挂载时也尝试初始化数据库，以确保数据库已准备就绪
-  useEffect(() => {
+  useEffect( () => {
     const initDB = async () => {
       try {
         await dbManager.init();
-      } catch (error) {
-        console.error('数据库初始化失败:', error);
+      } catch ( error ) {
+        console.error( '数据库初始化失败:', error );
       }
     };
 
     initDB();
-  }, []);
+  }, [] );
 
   return (
     <ConfigProvider locale={zhCN}>

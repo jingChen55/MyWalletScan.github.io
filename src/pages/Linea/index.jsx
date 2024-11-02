@@ -1,4 +1,3 @@
-import ErrorBoundary from "@/components/ErrorBoundary";
 import { exportToExcel } from "@utils";
 import { calculateStats } from '@utils/lineaHelpers';
 import { Form, Layout, notification } from "antd";
@@ -114,9 +113,8 @@ const Linea = () => {
     toggleHideColumn: () => dispatch( { type: 'TOGGLE_HIDE_COLUMN' } ),
     data: walletData,
     setData: setWalletData,
-    lineaTotalPoints,
-    handleDelete,
-    handleRefresh
+    onDelete: handleDelete,
+    onRefresh: handleRefresh
   } );
 
 

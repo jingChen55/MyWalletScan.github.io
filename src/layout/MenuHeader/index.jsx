@@ -52,8 +52,8 @@ const MenuHeader = () => {
       key: "Layer",
     },
     {
-      label: "zksync",
-      key: "zksync",
+      label: "scroll",
+      key: "scroll",
     },
     {
       label: "zk_info",

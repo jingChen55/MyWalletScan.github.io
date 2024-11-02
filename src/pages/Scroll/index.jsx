@@ -238,8 +238,10 @@ const Scroll = () => {
           }
         } );
 
-        const results = await processQueue( tasks, 2 );
-        const successCount = results.filter( r => r?.success ).length;
+        // 添加错误处理
+        const results = await processQueue( tasks, 2 ) || [];
+        // 确保 results 是数组
+        const successCount = Array.isArray( results ) ? results.filter( r => r?.success ).length : 0;
         showSuccess( `批量刷新完成，成功：${ successCount }/${ results.length }` );
       }
     } catch ( error ) {

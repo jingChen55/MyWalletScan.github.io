@@ -7,7 +7,7 @@
 }
 
 /* 确保内容区域不会超出容器 */
-.linea-content > div {
+.linea-content>div {
   max-width: 100%;
   margin: 0 auto;
   box-sizing: border-box;
@@ -39,7 +39,7 @@
   .linea-content {
     padding: 10px;
   }
-  
+
   .wallet-actions {
     padding: 8px;
   }
@@ -50,7 +50,7 @@
   width: 100%;
   margin-bottom: 20px;
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 16px;
 }
 
