@@ -191,7 +191,7 @@ const WalletList = () => {
       render: ( _, record ) => (
         <Popconfirm
           title="确定要删除这个钱包吗？"
-          onConfirm={() => onDeleteWallet( record.address )}
+          onConfirm={() => handleBatchDelete( [ record.address ] )}
           okText="确定"
           cancelText="取消"
         >
@@ -304,7 +304,6 @@ const WalletList = () => {
   // 批量删除钱包
   const handleBatchDelete = async ( addresses ) => {
     try {
-      debugger
       await dbManager.deleteWallets( addresses );
       // 删除后重新计算序号
       const remainingWallets = wallets

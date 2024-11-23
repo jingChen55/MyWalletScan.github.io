@@ -236,35 +236,27 @@ const BatchTransfer = () => {
       return;
     }
 
-    if (isExecuting.current) {
-      return;
-    }
-
+    // 使用 Modal.confirm 而不是 Modal.confirm
     Modal.confirm({
       title: '请输入密码',
       content: (
         <Input.Password
-          id="transfer-password-input"
+          id="transfer-password-input"  // 添加 id 以便获取
           placeholder="请输入密码"
         />
       ),
       okText: '确认',
       cancelText: '取消',
       async onOk() {
-        if (isExecuting.current) {
-          return;
+        const passwordInput = document.getElementById('transfer-password-input');
+        const password = passwordInput?.value;
+        
+        if (!password) {
+          message.error('请输入密码');
+          return Promise.reject('请输入密码');
         }
-        isExecuting.current = true;
 
         try {
-          const passwordInput = document.getElementById('transfer-password-input');
-          const password = passwordInput?.value;
-
-          if (!password) {
-            message.error('请输入密码');
-            return Promise.reject('请输入密码');
-          }
-
           // 获取钱包信息
           const wallet = wallets.find(w => w.address === pair.fromAddress);
           if (!wallet || !wallet.encryptedPrivateKey) {
@@ -283,19 +275,13 @@ const BatchTransfer = () => {
           );
           setTransferPairs(updatedPairs);
 
-          // 获取保留金额并根据类型转换
-          const rawReserveAmount = globalForm.getFieldValue('reserveAmount') || '0';
-          const reserveAmount = reserveType === 'USDT'
-            ? convertUsdtToEth(parseFloat(rawReserveAmount), ethPrice).toString()
-            : rawReserveAmount;
-
           // 执行转账
           const result = await executeTransfer({
             fromAddress: pair.fromAddress,
             toAddress: pair.toAddress,
             provider,
             privateKey,
-            reserveAmount
+            reserveAmount: globalForm.getFieldValue('reserveAmount') || '0'
           });
 
           // 更新状态为成功
@@ -312,7 +298,7 @@ const BatchTransfer = () => {
           await refreshBalances();
         } catch (error) {
           console.error('转账执行失败:', error);
-          // 更新状态失败
+          // 更新状态为失败
           setTransferPairs(prev => prev.map(p =>
             p.key === pair.key ? {
               ...p,
@@ -322,25 +308,22 @@ const BatchTransfer = () => {
           ));
           message.error('转账执行失败: ' + error.message);
           return Promise.reject(error);
-        } finally {
-          isExecuting.current = false;
         }
       },
       onCancel() {
-        isExecuting.current = false;
         message.info('已取消转账');
       },
     });
   };
 
-  // 修改批量转函数
+  // 修改批量转账函数
   const handleBatchTransfer = async () => {
-    if ( !selectedNetwork || !provider ) {
-      message.error( '请先选择网络' );
+    if (!selectedNetwork || !provider) {
+      message.error('请先选择网络');
       return;
     }
 
-    Modal.confirm( {
+    Modal.confirm({
       title: '请输入密码',
       content: (
         <Input.Password

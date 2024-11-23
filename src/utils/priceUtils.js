@@ -34,7 +34,7 @@ export const useEthPrice = () => {
     };
 
     updatePrice();
-    const interval = setInterval( updatePrice, 120000 ); // 每分钟更新一次
+    const interval = setInterval( updatePrice, 60000 ); // 每分钟更新一次
     return () => clearInterval( interval );
   }, [ lastUpdateTime ] );
 

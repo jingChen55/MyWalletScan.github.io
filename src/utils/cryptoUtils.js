@@ -39,6 +39,19 @@ export const decryptFromStorage = ( encryptedPrivateKey, password ) => {
       console.log( 'ECB模式解密失败，尝试其他方式' );
     }
 
+    // 方式2: CBC模式
+    try {
+      const bytes = CryptoJS.AES.decrypt( encryptedPrivateKey, password, {
+        mode: CryptoJS.mode.CBC,
+        padding: CryptoJS.pad.Pkcs7
+      } );
+      decrypted = bytes.toString( CryptoJS.enc.Utf8 );
+      if ( decrypted ) return decrypted;
+    } catch ( e ) {
+      error = e;
+      console.log( 'CBC模式解密失败，尝试其他方式' );
+    }
+
     // 方式3: 默认配置
     try {
       const bytes = CryptoJS.AES.decrypt( encryptedPrivateKey, password );
