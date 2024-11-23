@@ -251,7 +251,7 @@ const WalletList = () => {
 
       // 获取当前最大序号
       const maxOrderIndex = Math.max( ...wallets.map( w => w.orderIndex || 0 ), -1 );
-
+      debugger;
       for ( let [ index, line ] of lines.entries() ) {
         try {
           const [ number, address, encryptedPrivateKey ] = line.trim().split( /\s+/ );
@@ -300,31 +300,12 @@ const WalletList = () => {
     }
   };
 
-  // 删除钱包
-  const handleDeleteWallet = async ( address ) => {
-    try {
-      await dbManager.deleteWallet( address );
-      // 删除后重新计算序号
-      const remainingWallets = wallets
-        .filter( w => w.address !== address )
-        .map( ( wallet, index ) => ( {
-          ...wallet,
-          orderIndex: index
-        } ) );
-      await dbManager.addWallets( remainingWallets );
-      setWallets( remainingWallets );
-      message.success( '删除成功' );
-    } catch ( error ) {
-      message.error( '删除失败' );
-    }
-  };
 
   // 批量删除钱包
   const handleBatchDelete = async ( addresses ) => {
     try {
-      for ( const address of addresses ) {
-        await dbManager.deleteWallet( address );
-      }
+      debugger
+      await dbManager.deleteWallets( addresses );
       // 删除后重新计算序号
       const remainingWallets = wallets
         .filter( w => !addresses.includes( w.address ) )
