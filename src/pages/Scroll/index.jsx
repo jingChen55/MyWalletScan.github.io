@@ -168,7 +168,7 @@ const Scroll = () => {
       // 批量刷新
       else {
         if ( !selectedKeys?.length ) {
-          showError( '请选择要刷新的地址' );
+          showError( '请先选择要刷新的地址' );
           return;
         }
 
@@ -322,7 +322,6 @@ const Scroll = () => {
       <Content>
         <WalletTable
           data={data}
-          loading={loading.table}
           selectedKeys={selectedKeys}
           onRefresh={handleRefresh}
           onDelete={handleDelete}
