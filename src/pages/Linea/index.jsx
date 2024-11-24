@@ -114,7 +114,8 @@ const Linea = () => {
     data: walletData,
     setData: setWalletData,
     onDelete: handleDelete,
-    onRefresh: handleRefresh
+    onRefresh: handleRefresh,
+    tableData: walletData
   } );
 
 
