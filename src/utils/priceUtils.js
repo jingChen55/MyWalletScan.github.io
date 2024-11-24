@@ -7,6 +7,12 @@ const usePriceStore = create( ( set ) => ( {
   lastUpdateTime: null,
   setEthPrice: ( price ) => set( { ethPrice: price, lastUpdateTime: Date.now() } ),
 } ) );
+
+/**
+ * 格式化金额显示为美元
+ * @param {number} amount - 金额
+ * @returns {string} 格式化后的金额
+ */
 function formatToUSD( amount ) {
   return new Intl.NumberFormat( 'en-US', {
     style: 'currency',
@@ -15,7 +21,10 @@ function formatToUSD( amount ) {
     maximumFractionDigits: 2
   } ).format( amount );
 }
-// 获取ETH价格
+/**
+ * 获取ETH价格
+ * @returns {number} ETH价格
+ */
 export const fetchEthPrice = async () => {
   try {
     const response = await axios.get( 'https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd' );
@@ -28,7 +37,10 @@ export const fetchEthPrice = async () => {
   }
 };
 
-// 自动更新价格的 Hook
+/**
+ * 更新ETH价格 每分钟更新一次
+ * @returns {number} ETH价格
+ */
 export const useEthPrice = () => {
   const { ethPrice, lastUpdateTime } = usePriceStore();
 
@@ -48,13 +60,22 @@ export const useEthPrice = () => {
   return ethPrice;
 };
 
-// 转换 ETH 到 USDT
-export const convertEthToUsdt = ( ethAmount ) => {
+/**
+ * 将 ETH 转换为 USDT
+ * @param {number} ethAmount - ETH 金额
+ * @returns {string} 转换后的 USDT 金额
+ */
+export const convertEthToUsdt = ( ethAmount = 0 ) => {
   const ethPrice = usePriceStore.getState().ethPrice;
   return formatToUSD( parseFloat( ethAmount ) * ethPrice );
 };
 
-// 格式化金额显示
+/**
+ * 格式化金额显示
+ * @param {number} amount - 金额
+ * @param {string} type - 类型 'ETH' | 'USDT'
+ * @returns {string} 格式化后的金额
+ */
 export const formatAmount = ( amount, type = 'ETH' ) => {
   const num = parseFloat( amount );
   if ( isNaN( num ) ) return '0';
