@@ -1,14 +1,9 @@
-import {
-  CheckCircleOutlined,
-  CloseCircleOutlined,
-  CopyOutlined,
-  DeleteOutlined,
-  EditOutlined,
-  ReloadOutlined,
-  SyncOutlined,
-} from '@ant-design/icons';
+import { convertEthToUsdt, useEthPrice } from '@/utils/priceUtils';
+import { CheckCircleOutlined, CloseCircleOutlined, CopyOutlined, DeleteOutlined, EditOutlined, ReloadOutlined, SyncOutlined, } from '@ant-design/icons';
 import { formatNumber } from '@utils/format';
-import { Button, Input, Popconfirm, Space, Spin, Tag, Tooltip, notification } from 'antd';
+import { Button, Input, notification, Popconfirm, Space, Spin, Tag, Tooltip, Typography } from 'antd';
+import { useMemo } from 'react';
+const { Text } = Typography;
 
 export const createBaseColumns = ( {
   type, // 'scroll' | 'linea'
@@ -16,30 +11,42 @@ export const createBaseColumns = ( {
   onRefresh,
   onDelete,
   onNameChange,
+  tableData
 } ) => {
+  const ethPrice = useEthPrice();
+
   // 计算 fee 总和的函数
   const calculateTotalFee = ( data ) => {
+    console.log( "🚀 ~ file: baseColumns.jsx:17 ~ calculateTotalFee ~ data:", data );
     // 如果传入的是列配置信息，返回 0
-    if (!Array.isArray(data) || !data.length) {
+    if ( !Array.isArray( data ) || !data.length ) {
       return 0;
     }
-    
-    return data.reduce((total, item) => {
-      const fee = item.activity?.fee ? parseFloat(item.activity.fee) : 0;
-      return total + fee;
-    }, 0);
+    return data.reduce( ( total, item ) => {
+      const fee = item.activity?.fee ? parseFloat( item.activity.fee ) : 0;
+      const balance = item.balance ? parseFloat( item.balance ) : 0;
+      return {
+        fee: total.fee + fee,
+        balance: total.balance + balance
+      }
+    }, { fee: 0, balance: 0 } );
   };
+
+
+  const feeSummary = useMemo( () => {
+    return calculateTotalFee( tableData )
+  }, [ tableData ] )
 
   return [
     {
-      title: "#",
+      title: "序号",
       key: "index",
       align: "center",
       width: 70,
       render: ( text, record, index ) => index + 1,
     },
     {
-      title: "备注",
+      title: "Ads编号",
       dataIndex: "name",
       width: 100,
       key: "name",
@@ -52,7 +59,7 @@ export const createBaseColumns = ( {
             title={
               <div>
                 <Input
-                  placeholder={"请输入备注"}
+                  placeholder={"请输入ads 编号"}
                   defaultValue={text}
                   onChange={( e ) => {
                     record.name = e.target.value;
@@ -103,16 +110,37 @@ export const createBaseColumns = ( {
       },
     },
     {
-      title: "余额（E）",
       dataIndex: "balance",
       key: `${ type }_eth_balance`,
       align: "center",
-      render: ( text, record ) => (
-        <Spin spinning={record.loading || false} size="small">
-          <span>{formatNumber( text || 0 )}</span>
-        </Spin>
-      ),
+      render: ( text, record ) => {
+        const usdtBalance = convertEthToUsdt( record.balance, ethPrice )
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <Text style={{ fontSize: '12px' }}>
+              {text}e
+            </Text>
+            <Text type="secondary" style={{ fontSize: '12px' }}>
+              ≈ {usdtBalance}
+            </Text>
+          </div>
+        )
+      },
       sorter: ( a, b ) => ( parseFloat( a.balance ) || 0 ) - ( parseFloat( b.balance ) || 0 ),
+      title: ( _ ) => {
+        const usdtBalance = convertEthToUsdt( feeSummary.balance, ethPrice )
+        return (
+          <div>
+            <div>余额（E）</div>
+            <div style={{ fontSize: '12px', color: '#888' }}>
+              总计: {formatNumber( feeSummary.balance )}
+              <Text type="secondary" style={{ fontSize: '12px' }}>
+                ≈ {usdtBalance}
+              </Text>
+            </div>
+          </div>
+        )
+      },
     },
     {
       title: "最后交易",
@@ -163,15 +191,20 @@ export const createBaseColumns = ( {
         </Spin>
       ),
       sorter: ( a, b ) => ( parseFloat( a.activity?.fee ) || 0 ) - ( parseFloat( b.activity?.fee ) || 0 ),
-      // 修改表头渲染逻辑
-      title: ( _, __, tableData ) => (
-        <div>
-          <div>fee(E)</div>
-          <div style={{ fontSize: '12px', color: '#888' }}>
-            总计: {formatNumber( calculateTotalFee( tableData ) )}
+      title: ( _ ) => {
+        const usdtBalance = convertEthToUsdt( feeSummary.fee, ethPrice )
+        return (
+          <div>
+            <div>fee(E)</div>
+            <div style={{ fontSize: '12px', color: '#888' }}>
+              总计: {formatNumber( feeSummary.fee )}
+              <Text type="secondary" style={{ fontSize: '12px' }}>
+                ≈ {usdtBalance}
+              </Text>
+            </div>
           </div>
-        </div>
-      ),
+        )
+      },
     },
     {
       title: "状态",
@@ -204,13 +237,13 @@ export const createBaseColumns = ( {
       key: "action",
       align: "center",
       width: 120,
-      render: (text, record) => (
+      render: ( text, record ) => (
         <Space size="small" style={{ display: 'flex', justifyContent: 'center' }}>
           <Popconfirm
             title={"确认删除？"}
-            onConfirm={() => onDelete?.(record.address)}
+            onConfirm={() => onDelete?.( record.address )}
           >
-            <Button 
+            <Button
               icon={<DeleteOutlined />}
               size="middle"
               style={{ minWidth: '32px' }}
@@ -218,7 +251,7 @@ export const createBaseColumns = ( {
           </Popconfirm>
           <Button
             icon={<ReloadOutlined />}
-            onClick={() => onRefresh?.(record.address)}
+            onClick={() => onRefresh?.( record.address )}
             loading={record.loading}
             size="middle"
             style={{ minWidth: '32px' }}

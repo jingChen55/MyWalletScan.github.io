@@ -120,140 +120,140 @@ const Scroll = () => {
     }
   };
 
-  const handleRefresh = async (address) => {
+  const handleRefresh = async ( address ) => {
     try {
-        setLoading(prev => ({
-            ...prev,
-            refresh: true,
-            table: true
-        }));
+      setLoading( prev => ( {
+        ...prev,
+        refresh: true,
+        table: true
+      } ) );
 
-        // 单个地址刷新
-        if (typeof address === 'string') {
-            setData(prev => {
-                const updatedData = [...prev];
-                const index = updatedData.findIndex(item => item.address === address);
-                if (index !== -1) {
-                    updatedData[index] = {
-                        ...updatedData[index],
-                        loading: true,
-                        result: "pending",
-                        balance: null,
-                        activity: null,
-                        sessions: null,
-                        fee: null,
-                        lastTx: null,
-                        contractActivity: null,
-                    };
-                }
-                return updatedData;
-            });
+      // 单个地址刷新
+      if ( typeof address === 'string' ) {
+        setData( prev => {
+          const updatedData = [ ...prev ];
+          const index = updatedData.findIndex( item => item.address === address );
+          if ( index !== -1 ) {
+            updatedData[ index ] = {
+              ...updatedData[ index ],
+              loading: true,
+              result: "pending",
+              balance: null,
+              activity: null,
+              sessions: null,
+              fee: null,
+              lastTx: null,
+              contractActivity: null,
+            };
+          }
+          return updatedData;
+        } );
 
-            const response = await getScrollData(address);
-            setData(prev => {
-                const updatedData = [...prev];
-                const index = updatedData.findIndex(item => item.address === address);
-                if (index !== -1) {
-                    updatedData[index] = {
-                        ...updatedData[index],
-                        ...response,
-                        loading: false,
-                        result: "success"
-                    };
-                }
-                return updatedData;
-            });
-            showSuccess('刷新成功');
+        const response = await getScrollData( address );
+        setData( prev => {
+          const updatedData = [ ...prev ];
+          const index = updatedData.findIndex( item => item.address === address );
+          if ( index !== -1 ) {
+            updatedData[ index ] = {
+              ...updatedData[ index ],
+              ...response,
+              loading: false,
+              result: "success"
+            };
+          }
+          return updatedData;
+        } );
+        showSuccess( '刷新成功' );
+      }
+      // 批量刷新
+      else {
+        if ( !selectedKeys?.length ) {
+          showError( '请先选择要刷新的地址' );
+          return; // 确保在没有选中地址时返回
         }
-        // 批量刷新
-        else {
-            if (!selectedKeys?.length) {
-                showError('请先选择要刷新的地址');
-                return; // 确保在没有选中地址时返回
+
+        // 设置选中地址的加载状态
+        setData( prev => {
+          const updatedData = [ ...prev ];
+          selectedKeys.forEach( key => {
+            const index = updatedData.findIndex( item => item.key === key );
+            if ( index !== -1 ) {
+              updatedData[ index ] = {
+                ...updatedData[ index ],
+                loading: true,
+                result: "pending",
+                balance: null,
+                activity: null,
+                sessions: null,
+                fee: null,
+                lastTx: null,
+                contractActivity: null,
+              };
             }
+          } );
+          return updatedData;
+        } );
 
-            // 设置选中地址的加载状态
-            setData(prev => {
-                const updatedData = [...prev];
-                selectedKeys.forEach(key => {
-                    const index = updatedData.findIndex(item => item.key === key);
-                    if (index !== -1) {
-                        updatedData[index] = {
-                            ...updatedData[index],
-                            loading: true,
-                            result: "pending",
-                            balance: null,
-                            activity: null,
-                            sessions: null,
-                            fee: null,
-                            lastTx: null,
-                            contractActivity: null,
-                        };
-                    }
-                });
-                return updatedData;
-            });
+        const addressesToRefresh = data
+          .filter( item => selectedKeys.includes( item.key ) )
+          .map( item => item.address );
 
-            const addressesToRefresh = data
-                .filter(item => selectedKeys.includes(item.key))
-                .map(item => item.address);
-
-            if (!addressesToRefresh.length) {
-                showError('没有找到要刷新的地址');
-                return; // 确保在没有找到地址时返回
-            }
-
-            const tasks = addressesToRefresh.map(addr => async () => {
-                try {
-                    const response = await getScrollData(addr);
-                    setData(prev => {
-                        const updatedData = [...prev];
-                        const index = updatedData.findIndex(i => i.address === addr);
-                        if (index !== -1) {
-                            updatedData[index] = {
-                                ...updatedData[index],
-                                ...response,
-                                loading: false,
-                                result: "success"
-                            };
-                        }
-                        return updatedData;
-                    });
-                    return { address: addr, success: true };
-                } catch (error) {
-                    setData(prev => {
-                        const updatedData = [...prev];
-                        const index = updatedData.findIndex(i => i.address === addr);
-                        if (index !== -1) {
-                            updatedData[index] = {
-                                ...updatedData[index],
-                                loading: false,
-                                result: "error",
-                                reason: error.message
-                            };
-                        }
-                        return updatedData;
-                    });
-                    return { address: addr, success: false, error };
-                }
-            });
-
-            // 添加错误处理
-            const results = await processQueue(tasks, 2) || [];
-            const successCount = Array.isArray(results) ? results.filter(r => r?.success).length : 0;
-            showSuccess(`批量刷新完成，成功：${successCount}/${results.length}`);
+        if ( !addressesToRefresh.length ) {
+          showError( '没有找到要刷新的地址' );
+          return; // 确保在没有找到地址时返回
         }
-    } catch (error) {
-        console.error('刷新错误:', error);
-        showError(error.message);
+
+        const tasks = addressesToRefresh.map( addr => async () => {
+          try {
+            const response = await getScrollData( addr );
+            setData( prev => {
+              const updatedData = [ ...prev ];
+              const index = updatedData.findIndex( i => i.address === addr );
+              if ( index !== -1 ) {
+                updatedData[ index ] = {
+                  ...updatedData[ index ],
+                  ...response,
+                  loading: false,
+                  result: "success"
+                };
+              }
+              return updatedData;
+            } );
+            return { address: addr, success: true };
+          } catch ( error ) {
+            setData( prev => {
+              const updatedData = [ ...prev ];
+              const index = updatedData.findIndex( i => i.address === addr );
+              if ( index !== -1 ) {
+                updatedData[ index ] = {
+                  ...updatedData[ index ],
+                  loading: false,
+                  result: "error",
+                  reason: error.message
+                };
+              }
+              return updatedData;
+            } );
+            return { address: addr, success: false, error };
+          }
+        } );
+
+        // 添加错误处理
+        const results = await processQueue( tasks, 2 ) || [];
+        const successCount = Array.isArray( results ) ? results.filter( r => r?.success ).length : 0;
+        showSuccess( `批量刷新完成，成功：${ successCount }/${ results.length }` );
+      }
+    } catch ( error ) {
+      console.error( '刷新错误:', error );
+      showError( error.message );
     } finally {
-        setLoading(prev => ({
-            ...prev,
-            refresh: false,
-            table: false
-        }));
+      setLoading( prev => ( {
+        ...prev,
+        refresh: false,
+        table: false
+      } ) );
     }
-};
+  };
 
   const handleDelete = async ( address ) => {
     setData( prev => prev.filter( item => item.address !== address ) );
@@ -272,12 +272,13 @@ const Scroll = () => {
   const baseColumns = createBaseColumns( {
     type: 'scroll',
     hideColumn,
-    onRefresh: handleRefresh,
-    onDelete: handleDelete,
+    onRefresh: handleRefresh, //刷新按钮
+    onDelete: handleDelete, //删除按钮
     onNameChange: ( record ) => {
       setData( [ ...data ] );
       localStorage.setItem( 'Scroll_addresses', JSON.stringify( data ) );
-    }
+    },
+    tableData: data
   } );
 
   const scrollSpecificColumns = [
@@ -311,9 +312,10 @@ const Scroll = () => {
   ];
 
   const allColumns = [
-    ...baseColumns.slice( 0, 3 ),
+    ...baseColumns.slice( 0, 4 ),
     ...scrollSpecificColumns,
-    ...baseColumns.slice( 3 ),
+    ...baseColumns.slice( 4 ),
+
   ];
 
   return (

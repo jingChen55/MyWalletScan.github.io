@@ -1,14 +1,13 @@
 import GasFeeDisplay from '@/components/GasFeeDisplay';
+import TransactionDetail from '@/components/TransactionDetail';
 import { dbManager } from '@/utils/indexedDB';
 import { convertEthToUsdt, convertUsdtToEth, formatAmount, useEthPrice } from '@/utils/priceUtils';
 import { executeTransfer } from '@/utils/transferUtils';
-import { DeleteOutlined, ImportOutlined, SendOutlined, SyncOutlined, PlusCircleOutlined, MinusCircleOutlined } from '@ant-design/icons';
+import { DeleteOutlined, ImportOutlined, MinusCircleOutlined, PlusCircleOutlined, SendOutlined, SyncOutlined } from '@ant-design/icons';
 import { decryptFromStorage } from '@utils/cryptoUtils';
-import { Button, Card, Form, Input, InputNumber, message, Modal, Select, Table, Tooltip, Typography, Tag, Spin, Collapse, Empty } from 'antd';
-import { ethers, formatEther, JsonRpcProvider, parseEther } from 'ethers';
-import React, { useEffect, useState, useRef } from 'react';
-import TransactionDetail from '@/components/TransactionDetail';
-import { fetchTransactions } from '@/utils/transactionUtils';
+import { Button, Card, Collapse, Empty, Form, Input, InputNumber, message, Modal, Select, Spin, Table, Tag, Tooltip, Typography } from 'antd';
+import { ethers, formatEther } from 'ethers';
+import React, { useEffect, useState } from 'react';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -19,18 +18,6 @@ const maskAddress = ( address ) => {
   return `${ address.slice( 0, 6 ) }...${ address.slice( -4 ) }`;
 };
 
-// 添加重试函数
-const retryWithDelay = async ( fn, retries = 3, delay = 1000 ) => {
-  for ( let i = 0; i < retries; i++ ) {
-    try {
-      return await fn();
-    } catch ( error ) {
-      if ( i === retries - 1 ) throw error;
-      console.log( `尝败，${ delay / 1000 }秒后重试...` );
-      await new Promise( resolve => setTimeout( resolve, delay ) );
-    }
-  }
-};
 
 // 表格保留金额显示组件
 const ReserveAmountDisplay = ( { amount, type, ethPrice, networkSymbol } ) => {
@@ -55,32 +42,30 @@ const ReserveAmountDisplay = ( { amount, type, ethPrice, networkSymbol } ) => {
 };
 
 // 创建一个独立的展开行组件
-const ExpandedRow = ({ record, selectedNetwork, provider }) => {
-  const [loading, setLoading] = useState(false);
-  const [transactions, setTransactions] = useState([]);
+const ExpandedRow = ( { record, selectedNetwork, provider } ) => {
+  const [ loading, setLoading ] = useState( false );
+  const [ transactions, setTransactions ] = useState( [] );
 
-  useEffect(() => {
+  useEffect( () => {
     const loadTransactions = async () => {
-      if (!selectedNetwork || !provider || !record.fromAddress) return;
-      
-      setLoading(true);
+      if ( !selectedNetwork || !provider || !record.fromAddress ) return;
+
+      setLoading( true );
       try {
         const address = record.fromAddress.toLowerCase();
-        console.log('开始获取交易记录，钱包地址:', address);
-        
-        const txs = await fetchTransactions(address, provider);
-        console.log('获取到交易记录:', txs);
-        setTransactions(txs);
-      } catch (error) {
-        console.error('加载交易记录失败:', error);
-        message.error('加载交易记录失败');
+
+        console.log( '获取到交易记录:', txs );
+        setTransactions( txs );
+      } catch ( error ) {
+        console.error( '加载交易记录失败:', error );
+        message.error( '加载交易记录失败' );
       } finally {
-        setLoading(false);
+        setLoading( false );
       }
     };
 
     loadTransactions();
-  }, [record.fromAddress, selectedNetwork, provider]);
+  }, [ record.fromAddress, selectedNetwork, provider ] );
 
   return (
     <div style={{ margin: '20px 0' }}>
@@ -90,8 +75,8 @@ const ExpandedRow = ({ record, selectedNetwork, provider }) => {
       <Spin spinning={loading}>
         {transactions.length > 0 ? (
           <Collapse>
-            {transactions.map(tx => (
-              <Collapse.Panel 
+            {transactions.map( tx => (
+              <Collapse.Panel
                 header={
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span>
@@ -100,28 +85,30 @@ const ExpandedRow = ({ record, selectedNetwork, provider }) => {
                       </Tag>
                       {tx.hash}
                     </span>
-                    <span>{new Date(tx.timestamp).toLocaleString()}</span>
+                    <span>{new Date( tx.timestamp ).toLocaleString()}</span>
                   </div>
-                } 
+                }
                 key={tx.hash}
               >
                 <TransactionDetail transaction={tx} />
               </Collapse.Panel>
-            ))}
+            ) )}
           </Collapse>
         ) : (
-          <Empty description={`暂无交易记录 (${record.fromAddress})`} />
+          <Empty description={`暂无交易记录 (${ record.fromAddress })`} />
         )}
       </Spin>
     </div>
   );
 };
-
+/**
+ * 批量转账页面
+ * @returns 
+ */
 const BatchTransfer = () => {
   const [ form ] = Form.useForm();
   const [ networks, setNetworks ] = useState( [] );
   const [ wallets, setWallets ] = useState( [] );
-  const [ loading, setLoading ] = useState( false );
   const [ selectedNetwork, setSelectedNetwork ] = useState( null );
   const [ transferPairs, setTransferPairs ] = useState( [] );
   const [ isImportModalVisible, setIsImportModalVisible ] = useState( false );
@@ -130,10 +117,6 @@ const BatchTransfer = () => {
   const [ globalForm ] = Form.useForm();
   const ethPrice = useEthPrice();
   const [ reserveType, setReserveType ] = useState( 'ETH' );
-
-  // 将 isExecuting ref 移到组件顶层
-  const isExecuting = useRef(false);
-
   // 加载网络和钱包数据
   useEffect( () => {
     const loadData = async () => {
@@ -151,21 +134,17 @@ const BatchTransfer = () => {
     loadData();
   }, [] );
 
-  // 修改额刷新功能
-  const refreshBalances = async () => {
-    console.log( '刷新余额开始' );
-    if ( !selectedNetwork || !provider ) {
-      message.error( '请先选择网络' );
-      return;
-    }
-
+  /**
+   * 更新钱包余额
+   * @returns 
+   */
+  const refreshBalance = async ( address ) => {
     try {
       message.loading( { content: '正在刷新余额...', key: 'refreshBalance' } );
 
-      // 获取当前列表中所有钱的地址
-      const addresses = transferPairs.map( pair => pair.fromAddress );
+
       // 去重
-      const uniqueAddresses = [ ...new Set( addresses ) ];
+      const uniqueAddresses = [ ...new Set( address ) ];
 
       console.log( '需要刷新余额的地址:', uniqueAddresses );
 
@@ -173,7 +152,6 @@ const BatchTransfer = () => {
       const updatedBalances = await Promise.all(
         uniqueAddresses.map( async address => {
           try {
-            console.log( `获取钱包 ${ address } 的余额` );
             const balance = await provider.getBalance( address );
             console.log( `钱包 ${ address } 余额:`, formatEther( balance ) );
             return {
@@ -181,10 +159,10 @@ const BatchTransfer = () => {
               balance: formatEther( balance )
             };
           } catch ( error ) {
-            console.error( `获取钱包 ${ address } 余额失败:`, error );
+            message.error( { content: '刷新余额失败', key: 'refreshBalance' } );
             return {
               address,
-              balance: '0'
+              balance: null
             };
           }
         } )
@@ -192,23 +170,38 @@ const BatchTransfer = () => {
 
       // 更新钱包列表
       const balanceMap = updatedBalances.reduce( ( acc, { address, balance } ) => {
-        acc[ address ] = balance;
+        if ( balance ) {
+          acc[ address ] = balance
+        } else {
+          throw new Error( "刷新余额失败" );
+        }
         return acc;
       }, {} );
-
+      console.log( '更新后的钱包列表: 地址 余额', balanceMap );
       // 只更新当前列表中的钱包余额
       const updatedWalletsList = wallets.map( wallet => ( {
         ...wallet,
         balance: balanceMap[ wallet.address ] || wallet.balance
       } ) );
 
-      console.log( '更新后的钱包列表:', updatedWalletsList );
-      setWallets( updatedWalletsList );
+      setWallets( updatedWalletsList ); //数据库更新
       message.success( { content: '余额刷新成功', key: 'refreshBalance' } );
     } catch ( error ) {
       console.error( '刷新余额失败:', error );
       message.error( { content: '刷新余额失败', key: 'refreshBalance' } );
     }
+  }
+
+  // 修改额刷新功能
+  const refreshBalances = async () => {
+    console.log( '刷新余额开始' );
+    if ( !selectedNetwork || !provider ) {
+      message.error( '请先选择网络' );
+      return;
+    }
+    // 获取当前列表中所有钱的地址
+    const addresses = transferPairs.map( pair => pair.fromAddress );
+    refreshBalance( addresses )
   };
 
   // 修改网络选择处理函数
@@ -219,7 +212,9 @@ const BatchTransfer = () => {
     if ( network ) {
       try {
         // 为选定的网络创建新的 provider
-        const newProvider = new JsonRpcProvider( network.rpc );
+        const newProvider = new ethers.JsonRpcProvider( network.rpc );
+
+        // const newProvider = new JsonRpcProvider( network.rpc );
         setProvider( newProvider );
         message.success( '网络切换成功' );
       } catch ( error ) {
@@ -230,14 +225,14 @@ const BatchTransfer = () => {
   };
 
   // 修改执行单个转账函数
-  const handleSingleTransfer = async (pair) => {
-    if (!selectedNetwork || !provider) {
-      message.error('请先选择网络');
+  const handleSingleTransfer = async ( pair ) => {
+    if ( !selectedNetwork || !provider ) {
+      message.error( '请先选择网络' );
       return;
     }
 
     // 使用 Modal.confirm 而不是 Modal.confirm
-    Modal.confirm({
+    Modal.confirm( {
       title: '请输入密码',
       content: (
         <Input.Password
@@ -248,82 +243,82 @@ const BatchTransfer = () => {
       okText: '确认',
       cancelText: '取消',
       async onOk() {
-        const passwordInput = document.getElementById('transfer-password-input');
+        const passwordInput = document.getElementById( 'transfer-password-input' );
         const password = passwordInput?.value;
-        
-        if (!password) {
-          message.error('请输入密码');
-          return Promise.reject('请输入密码');
+
+        if ( !password ) {
+          message.error( '请输入密码' );
+          return Promise.reject( '请输入密码' );
         }
 
         try {
           // 获取钱包信息
-          const wallet = wallets.find(w => w.address === pair.fromAddress);
-          if (!wallet || !wallet.encryptedPrivateKey) {
-            throw new Error('找不到钱包或私钥为空');
+          const wallet = wallets.find( w => w.address === pair.fromAddress );
+          if ( !wallet || !wallet.encryptedPrivateKey ) {
+            throw new Error( '找不到钱包或私钥为空' );
           }
 
           // 解密私钥
-          const privateKey = decryptFromStorage(wallet.encryptedPrivateKey, password);
-          if (!privateKey) {
-            throw new Error('密码错误，解密失败');
+          const privateKey = decryptFromStorage( wallet.encryptedPrivateKey, password );
+          if ( !privateKey ) {
+            throw new Error( '密码错误，解密失败' );
           }
 
           // 更新状态为执行中
-          const updatedPairs = transferPairs.map(p =>
+          const updatedPairs = transferPairs.map( p =>
             p.key === pair.key ? { ...p, status: 'pending', error: null } : p
           );
-          setTransferPairs(updatedPairs);
+          setTransferPairs( updatedPairs );
 
           // 执行转账
-          const result = await executeTransfer({
+          const result = await executeTransfer( {
             fromAddress: pair.fromAddress,
             toAddress: pair.toAddress,
             provider,
             privateKey,
-            reserveAmount: globalForm.getFieldValue('reserveAmount') || '0'
-          });
+            reserveAmount: globalForm.getFieldValue( 'reserveAmount' ) || '0'
+          } );
 
           // 更新状态为成功
-          setTransferPairs(prev => prev.map(p =>
+          setTransferPairs( prev => prev.map( p =>
             p.key === pair.key ? {
               ...p,
               status: 'success',
               actualGas: result.gasCost,
               error: null
             } : p
-          ));
+          ) );
 
-          message.success('转账执行成功');
-          await refreshBalances();
-        } catch (error) {
-          console.error('转账执行失败:', error);
+          message.success( '转账执行成功' );
+          await refreshBalance( [ pair.fromAddress ] );
+        } catch ( error ) {
+          console.error( '转账执行失败:', error );
           // 更新状态为失败
-          setTransferPairs(prev => prev.map(p =>
+          setTransferPairs( prev => prev.map( p =>
             p.key === pair.key ? {
               ...p,
               status: 'failed',
               error: error.message
             } : p
-          ));
-          message.error('转账执行失败: ' + error.message);
-          return Promise.reject(error);
+          ) );
+          message.error( '转账执行失败: ' + error.message );
+          return Promise.reject( error );
         }
       },
       onCancel() {
-        message.info('已取消转账');
+        message.info( '已取消转账' );
       },
-    });
+    } );
   };
 
   // 修改批量转账函数
   const handleBatchTransfer = async () => {
-    if (!selectedNetwork || !provider) {
-      message.error('请先选择网络');
+    if ( !selectedNetwork || !provider ) {
+      message.error( '请先选择网络' );
       return;
     }
 
-    Modal.confirm({
+    Modal.confirm( {
       title: '请输入密码',
       content: (
         <Input.Password
@@ -499,10 +494,10 @@ const BatchTransfer = () => {
       title: '钱包余额',
       width: 150,
       key: 'balance',
-      render: (_, record) => {
-        const wallet = wallets.find(w => w.address === record.fromAddress);
-        const ethBalance = wallet ? formatAmount(wallet.balance, 'ETH') : '0';
-        const usdtBalance = wallet ? formatAmount(convertEthToUsdt(wallet.balance, ethPrice), 'USDT') : '0';
+      render: ( _, record ) => {
+        const wallet = wallets.find( w => w.address === record.fromAddress );
+        const ethBalance = wallet ? formatAmount( wallet.balance, 'ETH' ) : '0';
+        const usdtBalance = wallet ? formatAmount( convertEthToUsdt( wallet.balance, ethPrice ), 'USDT' ) : '0';
         return (
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <Text style={{ fontSize: '12px' }}>
@@ -521,19 +516,19 @@ const BatchTransfer = () => {
       width: 180,
       key: 'toAddress',
       editable: true,
-      render: (text, record) => {
+      render: ( text, record ) => {
         const isEditing = record.key === editingKey;
         return isEditing ? (
           <Form.Item
             name="toAddress"
             style={{ margin: 0 }}
-            rules={[{ required: true, message: '请输入接收地址' }]}
+            rules={[ { required: true, message: '请输入接收地址' } ]}
           >
             <Input />
           </Form.Item>
         ) : (
           <Text copyable={{ text }}>
-            {maskAddress(text)}
+            {maskAddress( text )}
           </Text>
         );
       }
@@ -543,13 +538,13 @@ const BatchTransfer = () => {
       width: 150,
       key: 'reserveAmount',
       editable: true,
-      render: (_, record) => {
+      render: ( _, record ) => {
         const isEditing = record.key === editingKey;
         return isEditing ? (
           <Form.Item
             name="reserveAmount"
             style={{ margin: 0 }}
-            rules={[{ required: true, message: '请输入保留数量' }]}
+            rules={[ { required: true, message: '请输入保留数量' } ]}
           >
             <InputNumber
               style={{ width: '100%' }}
@@ -559,7 +554,7 @@ const BatchTransfer = () => {
           </Form.Item>
         ) : (
           <ReserveAmountDisplay
-            amount={record.reserveAmount || globalForm.getFieldValue('reserveAmount') || '0'}
+            amount={record.reserveAmount || globalForm.getFieldValue( 'reserveAmount' ) || '0'}
             type={reserveType}
             ethPrice={ethPrice}
             networkSymbol={selectedNetwork?.symbol}
@@ -572,13 +567,13 @@ const BatchTransfer = () => {
       width: 150,
       key: 'transferAmount',
       editable: true,
-      render: (_, record) => {
+      render: ( _, record ) => {
         const isEditing = record.key === editingKey;
         return isEditing ? (
           <Form.Item
             name="transferAmount"
             style={{ margin: 0 }}
-            rules={[{ required: true, message: '请输入转账数量' }]}
+            rules={[ { required: true, message: '请输入转账数量' } ]}
           >
             <InputNumber
               style={{ width: '100%' }}
@@ -620,30 +615,18 @@ const BatchTransfer = () => {
       }
     },
     {
-      title: '预估Gas费',
-      width: 180,
-      key: 'estimatedGas',
-      render: () => (
-        <GasEstimateCell
-          provider={provider}
-          selectedNetwork={selectedNetwork}
-          ethPrice={ethPrice}
-        />
-      )
-    },
-    {
       title: '实际Gas费',
       width: 180,
       dataIndex: 'actualGas',
       key: 'actualGas',
-      render: (actualGas, record) => {
-        if (!actualGas) return '-';
-        
+      render: ( actualGas, record ) => {
+        if ( !actualGas ) return '-';
+
         try {
           // 如果 actualGas 已经是字符串形式的数字，直接使用
           const ethAmount = actualGas;
-          const usdAmount = (parseFloat(ethAmount) * ethPrice).toFixed(2);
-          
+          const usdAmount = ( parseFloat( ethAmount ) * ethPrice ).toFixed( 2 );
+
           return (
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               <Text style={{ fontSize: '12px' }}>
@@ -654,8 +637,8 @@ const BatchTransfer = () => {
               </Text>
             </div>
           );
-        } catch (error) {
-          console.error('Gas费用显示错误:', error);
+        } catch ( error ) {
+          console.error( 'Gas费用显示错误:', error );
           return '-';
         }
       }
@@ -663,7 +646,7 @@ const BatchTransfer = () => {
     {
       title: '操作',
       key: 'action',
-      render: (_, record) => {
+      render: ( _, record ) => {
         const isEditing = record.key === editingKey;
         return (
           <div style={{ display: 'flex', gap: '8px' }}>
@@ -672,7 +655,7 @@ const BatchTransfer = () => {
                 <Button
                   type="primary"
                   size="small"
-                  onClick={() => handleSave(record.key)}
+                  onClick={() => handleSave( record.key )}
                 >
                   保存
                 </Button>
@@ -689,14 +672,14 @@ const BatchTransfer = () => {
                   type="primary"
                   size="small"
                   disabled={record.status === 'success' || executing}
-                  onClick={() => handleSingleTransfer(record)}
+                  onClick={() => handleSingleTransfer( record )}
                 >
                   执行
                 </Button>
                 <Button
                   type="text"
                   size="small"
-                  onClick={() => handleEdit(record)}
+                  onClick={() => handleEdit( record )}
                 >
                   编辑
                 </Button>
@@ -704,7 +687,7 @@ const BatchTransfer = () => {
                   type="text"
                   danger
                   icon={<DeleteOutlined />}
-                  onClick={() => handleDelete(record.id)}
+                  onClick={() => handleDelete( record.id )}
                 >
                   删除
                 </Button>
@@ -732,104 +715,7 @@ const BatchTransfer = () => {
   }, [] );
 
   // 添加 TransferAmountDisplay 组件
-  const TransferAmountDisplay = ({ record, selectedNetwork, provider, globalForm, ethPrice }) => {
-    const [amount, setAmount] = useState('-');
-    const [usdtAmount, setUsdtAmount] = useState('-');
-
-    useEffect(() => {
-      const calculateAmount = async () => {
-        if (!selectedNetwork || !provider) return;
-        try {
-          const balance = await provider.getBalance(record.fromAddress);
-          const reserveAmount = record.reserveAmount || globalForm.getFieldValue('reserveAmount');
-          if (!reserveAmount && reserveAmount !== 0) {
-            setAmount('请设置保留金额');
-            return;
-          }
-
-          const reserveEther = ethers.parseEther(reserveAmount.toString());
-          const feeData = await provider.getFeeData();
-          const gasLimit = 21000n;
-          const gasPrice = feeData.maxFeePerGas || feeData.gasPrice;
-          const gasCost = gasPrice * gasLimit;
-          const availableAmount = balance - reserveEther - gasCost;
-
-          if (availableAmount <= 0n) {
-            setAmount('余额不足');
-            setUsdtAmount('-');
-          } else {
-            const ethAmount = ethers.formatEther(availableAmount);
-            setAmount(ethAmount);
-            setUsdtAmount((parseFloat(ethAmount) * ethPrice).toFixed(2));
-          }
-        } catch (error) {
-          setAmount('计算失败');
-          setUsdtAmount('-');
-        }
-      };
-
-      calculateAmount();
-    }, [selectedNetwork, provider, record.fromAddress, globalForm, ethPrice, record.reserveAmount]);
-
-    return (
-      <div style={{ display: 'flex', flexDirection: 'column' }}>
-        <Text
-          type={amount === '余额不足' || amount === '计算失败' ? 'danger' : undefined}
-          style={{ fontSize: '12px' }}
-        >
-          {amount === '余额不足' || amount === '计算失败' ? amount : `${amount} ${selectedNetwork?.symbol || 'ETH'}`}
-        </Text>
-        {amount !== '余额不足' && amount !== '计算失败' && amount !== '请设置保留金额' && (
-          <Text type="secondary" style={{ fontSize: '12px' }}>
-            ≈ ${usdtAmount}
-          </Text>
-        )}
-      </div>
-    );
-  };
-
-  // 添加 GasEstimate 组件
-  const GasEstimate = ( { provider, selectedNetwork } ) => {
-    const [ gasEstimate, setGasEstimate ] = useState( '-' );
-    const [ usdtGasEstimate, setUsdtGasEstimate ] = useState( '-' );
-
-    useEffect( () => {
-      const estimateGas = async () => {
-        if ( !selectedNetwork || !provider ) return;
-        try {
-          const feeData = await provider.getFeeData();
-          const gasLimit = 21000n;
-          const gasPrice = feeData.maxFeePerGas || feeData.gasPrice;
-          const gasCost = gasPrice * gasLimit;
-          
-          // 使用 formatEther 转换为字符串形式的 ETH 值
-          const ethAmount = ethers.formatEther(gasCost);
-          setGasEstimate(ethAmount);
-          setUsdtGasEstimate((parseFloat(ethAmount) * ethPrice).toFixed(2));
-        } catch (error) {
-          console.error('计算Gas费用失败:', error);
-          setGasEstimate('计算失败');
-          setUsdtGasEstimate('-');
-        }
-      };
-
-      estimateGas();
-    }, [selectedNetwork, provider, ethPrice]);
-
-    return (
-      <div style={{ display: 'flex', flexDirection: 'column' }}>
-        <Text style={{ fontSize: '12px' }}>
-          {gasEstimate} {selectedNetwork?.symbol || 'ETH'}
-        </Text>
-        <Text type="secondary" style={{ fontSize: '12px' }}>
-          ≈ ${usdtGasEstimate}
-        </Text>
-      </div>
-    );
-  };
-
-  // 创建独立的组件来显示转账金额
-  const TransferAmountCell = ( { record, selectedNetwork, provider, globalForm, ethPrice } ) => {
+  const TransferAmountDisplay = ( { record, selectedNetwork, provider, globalForm, ethPrice } ) => {
     const [ amount, setAmount ] = useState( '-' );
     const [ usdtAmount, setUsdtAmount ] = useState( '-' );
 
@@ -838,13 +724,13 @@ const BatchTransfer = () => {
         if ( !selectedNetwork || !provider ) return;
         try {
           const balance = await provider.getBalance( record.fromAddress );
-          const reserveAmount = globalForm.getFieldValue( 'reserveAmount' );
+          const reserveAmount = record.reserveAmount || globalForm.getFieldValue( 'reserveAmount' );
           if ( !reserveAmount && reserveAmount !== 0 ) {
             setAmount( '请设置保留金额' );
             return;
           }
 
-          const reserveEther = parseEther( reserveAmount.toString() );
+          const reserveEther = ethers.parseEther( reserveAmount.toString() );
           const feeData = await provider.getFeeData();
           const gasLimit = 21000n;
           const gasPrice = feeData.maxFeePerGas || feeData.gasPrice;
@@ -855,7 +741,7 @@ const BatchTransfer = () => {
             setAmount( '余额不足' );
             setUsdtAmount( '-' );
           } else {
-            const ethAmount = formatEther( availableAmount );
+            const ethAmount = ethers.formatEther( availableAmount );
             setAmount( ethAmount );
             setUsdtAmount( ( parseFloat( ethAmount ) * ethPrice ).toFixed( 2 ) );
           }
@@ -866,7 +752,7 @@ const BatchTransfer = () => {
       };
 
       calculateAmount();
-    }, [ selectedNetwork, provider, record.fromAddress, globalForm, ethPrice ] );
+    }, [ selectedNetwork, provider, record.fromAddress, globalForm, ethPrice, record.reserveAmount ] );
 
     return (
       <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -885,120 +771,39 @@ const BatchTransfer = () => {
     );
   };
 
-  // 创建独立的组件来显示预估 Gas 费用
-  const GasEstimateCell = ( { provider, selectedNetwork, ethPrice } ) => {
-    const [ gasEstimate, setGasEstimate ] = useState( '-' );
-    const [ usdtGasEstimate, setUsdtGasEstimate ] = useState( '-' );
-
-    useEffect( () => {
-      const estimateGas = async () => {
-        if ( !selectedNetwork || !provider ) return;
-        try {
-          const feeData = await provider.getFeeData();
-          const gasLimit = 21000n;
-          const gasPrice = feeData.maxFeePerGas || feeData.gasPrice;
-          const gasCost = gasPrice * gasLimit;
-          
-          // 使用 formatEther 转换为字符串形式的 ETH 值
-          const ethAmount = ethers.formatEther(gasCost);
-          setGasEstimate(ethAmount);
-          setUsdtGasEstimate((parseFloat(ethAmount) * ethPrice).toFixed(2));
-        } catch (error) {
-          console.error('计算Gas费用失败:', error);
-          setGasEstimate('计算失败');
-          setUsdtGasEstimate('-');
-        }
-      };
-
-      estimateGas();
-    }, [selectedNetwork, provider, ethPrice]);
-
-    return (
-      <div style={{ display: 'flex', flexDirection: 'column' }}>
-        <Text style={{ fontSize: '12px' }}>
-          {gasEstimate} {selectedNetwork?.symbol || 'ETH'}
-        </Text>
-        <Text type="secondary" style={{ fontSize: '12px' }}>
-          ≈ ${usdtGasEstimate}
-        </Text>
-      </div>
-    );
-  };
-
-  // 计算可转账金额
-  const calculateTransferAmount = ( balance, reserveAmount ) => {
-    let reserveEther;
-    if ( reserveType === 'USDT' ) {
-      reserveEther = parseEther( ( reserveAmount / ethPrice ).toString() );
-    } else {
-      reserveEther = parseEther( reserveAmount.toString() );
-    }
-    return balance.sub( reserveEther );
-  };
-
   // 添加编辑相关的状态和函数
-  const [editingKey, setEditingKey] = useState('');
+  const [ editingKey, setEditingKey ] = useState( '' );
 
-  const isEditing = (record) => record.key === editingKey;
 
-  const handleEdit = (record) => {
-    form.setFieldsValue({
+  const handleEdit = ( record ) => {
+    form.setFieldsValue( {
       toAddress: record.toAddress,
       reserveAmount: record.reserveAmount,
       transferAmount: record.transferAmount,
-    });
-    setEditingKey(record.key);
+    } );
+    setEditingKey( record.key );
   };
 
   const handleCancel = () => {
-    setEditingKey('');
+    setEditingKey( '' );
   };
 
-  const handleSave = async (key) => {
+  const handleSave = async ( key ) => {
     try {
       const row = await form.validateFields();
-      const newData = [...transferPairs];
-      const index = newData.findIndex(item => key === item.key);
-      if (index > -1) {
-        const item = newData[index];
-        newData.splice(index, 1, {
+      const newData = [ ...transferPairs ];
+      const index = newData.findIndex( item => key === item.key );
+      if ( index > -1 ) {
+        const item = newData[ index ];
+        newData.splice( index, 1, {
           ...item,
           ...row,
-        });
-        setTransferPairs(newData);
-        setEditingKey('');
+        } );
+        setTransferPairs( newData );
+        setEditingKey( '' );
       }
-    } catch (errInfo) {
-      console.log('Validate Failed:', errInfo);
-    }
-  };
-
-  // 添加获取交易记录的函数
-  const getTransactionHistory = async (address) => {
-    try {
-      // 这里可以根据实际需求从区块链获取交易记录
-      // 目前使用模拟数据
-      return [
-        {
-          hash: '0x123...',
-          timestamp: new Date().toISOString(),
-          status: 'success',
-          value: '0.1',
-          gasUsed: '0.001',
-          type: '转出'
-        },
-        {
-          hash: '0x456...',
-          timestamp: new Date(Date.now() - 86400000).toISOString(),
-          status: 'failed',
-          value: '0.2',
-          gasUsed: '0.002',
-          type: '入'
-        }
-      ];
-    } catch (error) {
-      console.error('取交易记录失败:', error);
-      return [];
+    } catch ( errInfo ) {
+      console.log( 'Validate Failed:', errInfo );
     }
   };
 
@@ -1101,19 +906,19 @@ const BatchTransfer = () => {
             pagination={false}
             loading={executing}
             expandable={{
-              expandedRowRender: (record) => (
+              expandedRowRender: ( record ) => (
                 <ExpandedRow record={record} selectedNetwork={selectedNetwork} provider={provider} />
               ),
-              expandIcon: ({ expanded, onExpand, record }) => (
+              expandIcon: ( { expanded, onExpand, record } ) => (
                 expanded ? (
                   <MinusCircleOutlined onClick={e => {
                     e.stopPropagation(); // 阻止事件冒泡
-                    onExpand(record, e);
+                    onExpand( record, e );
                   }} />
                 ) : (
                   <PlusCircleOutlined onClick={e => {
                     e.stopPropagation(); // 阻止事件冒泡
-                    onExpand(record, e);
+                    onExpand( record, e );
                   }} />
                 )
               )

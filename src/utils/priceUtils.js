@@ -1,18 +1,25 @@
+import axios from 'axios';
 import React from 'react';
 import { create } from 'zustand';
-
 // 创建全局状态管理
 const usePriceStore = create( ( set ) => ( {
   ethPrice: 0,
   lastUpdateTime: null,
   setEthPrice: ( price ) => set( { ethPrice: price, lastUpdateTime: Date.now() } ),
 } ) );
-
+function formatToUSD( amount ) {
+  return new Intl.NumberFormat( 'en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  } ).format( amount );
+}
 // 获取ETH价格
 export const fetchEthPrice = async () => {
   try {
-    const response = await fetch( 'https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd' );
-    const data = await response.json();
+    const response = await axios.get( 'https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd' );
+    const data = response.data
     usePriceStore.getState().setEthPrice( data.ethereum.usd );
     return data.ethereum.usd;
   } catch ( error ) {
@@ -44,7 +51,7 @@ export const useEthPrice = () => {
 // 转换 ETH 到 USDT
 export const convertEthToUsdt = ( ethAmount ) => {
   const ethPrice = usePriceStore.getState().ethPrice;
-  return parseFloat( ethAmount ) * ethPrice;
+  return formatToUSD( parseFloat( ethAmount ) * ethPrice );
 };
 
 // 格式化金额显示
