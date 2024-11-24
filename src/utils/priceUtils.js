@@ -65,7 +65,7 @@ export const useEthPrice = () => {
  * @param {number} ethAmount - ETH 金额
  * @returns {string} 转换后的 USDT 金额
  */
-export const convertEthToUsdt = ( ethAmount = 0 ) => {
+export const convertEthToUsdt = ( ethAmount ) => {
   const ethPrice = usePriceStore.getState().ethPrice;
   return formatToUSD( parseFloat( ethAmount ) * ethPrice );
 };
